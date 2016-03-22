@@ -12,6 +12,14 @@ typings/
 # compiled js
 app.js
 app.js.map
+db.js
+db.js.map
+routes/bookmark.js
+routes/bookmark.js.map
+routes/index.js
+routes/index.js.map
+routes/user.js
+routes/user.js.map
 
 # Build results
 [Dd]ebug/

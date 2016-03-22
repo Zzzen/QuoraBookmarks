@@ -5,6 +5,10 @@
     },
     "files": [
         "./typings/tsd.d.ts",
-        "./app.ts"
+        "./app.ts",
+        "./db.ts",
+        "./routes/index.ts",
+        "./routes/user.ts",
+        "./routes/bookmark.ts"
     ]
 }
