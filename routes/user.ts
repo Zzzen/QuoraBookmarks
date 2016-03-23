@@ -3,6 +3,10 @@ import db = require("../db");
 
 const router = express.Router();
 
+const notEmpty = function(str: string): boolean {
+    return str != null && str.length > 0;
+}
+
 router.get('/', function(req, res, next) {
     db.getUsers(null).then((users) => {
         res.send(users);
@@ -18,11 +22,17 @@ router.post('/', function(req, res, next) {
         email: req.body.email
     };
 
-    db.addUser(user).then((user) => {
-        res.send(user);
-    }, (user) => {
-        res.send(user);
-    });
+    if (notEmpty(user.hashedPassword) && (notEmpty(user.userName) || notEmpty(user.email))) {
+        db.addUser(user).then((user) => {
+            res.send(user);
+        }, (user) => {
+            res.send(user);
+        });
+    } else {
+        res.status(409).send("");
+    }
+
+
 });
 
 export = router;

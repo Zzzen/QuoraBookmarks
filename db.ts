@@ -13,6 +13,7 @@ export interface User {
     userName: string;
     hashedPassword: string;
     quoraId?: string;
+    bookmarks?: Bookmark;
 }
 
 export interface Bookmark {
@@ -23,9 +24,69 @@ export interface Bookmark {
     answers?: string[];
 }
 
+export interface Cookie {
+    _id?: mongodb.ObjectID;
+    userId?: mongodb.ObjectID;
+    date: Date;
+}
+
+//@return Promise: string, cookieID
+function insertCookie(userId: mongodb.ObjectID): Promise<string>{
+    const promise = new Promise<string>((resolve, reject) =>{
+        const cookie: Cookie = {
+            userId: userId,
+            date: new Date()
+        };
+        
+        db.collection('cookies').insert(cookie, (err, results) =>{
+            if(err){ 
+                console.log(err);
+                reject("");
+            }else{
+                assert.notEqual(cookie._id, null, "fail to insert cookie");
+                resolve(cookie._id.toHexString());        
+            }
+        });
+    });
+    return promise;
+}
+
+//@param user: email or userName must be defined, hashedPassword must be defined.
+//@return Promise; resolve(cookie: string), reject("")
+export function varifyUser(user: User): Promise<string> {
+    const promise = new Promise<string>((resolve, reject) =>{
+        db.collection('users').find({$and: [{hashedPassword: user.hashedPassword}, 
+                                            {$or: [
+                                                    {$and: [{email: {$ne: null}}, {email: user.email}]},
+                                                    {$and: [{userName: {$ne: null}}, {userName: user.userName}]}
+                                                  ]
+                                            }
+                                           ]
+                                    }, (err, cursor)=>{
+                                        if(err) {
+                                            console.log(err);
+                                            reject("");
+                                        }else{
+                                            cursor.toArray((err, results: User[]) => {
+                                                assert.equal(err, null, "err: cursor.toArray");
+                                                if(results.length===0){
+                                                    reject('');
+                                                }else{
+                                                     insertCookie(results[0]._id).then((id)=>resolve(id),
+                                                                                   (id)=>reject(id));
+                                                }
+                                            })
+                                        }
+                                    });
+    });
+    
+    return promise;
+}
+
+//@param user: email, userName, hashedPassword must be defined.
 export function addUser(user: User): Promise<User> {
     const promise = new Promise<User>((resolve, reject) => {
-        db.collection('users').insertOne(user, (err, result) => {
+        db.collection('users').insert(user, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(user);
@@ -38,9 +99,10 @@ export function addUser(user: User): Promise<User> {
     return promise;
 }
 
+//@param bookmark: creatorId, title must be defined.
 export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
     const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection('bookmarks').insertOne(bookmark, (err, result) => {
+        db.collection('bookmarks').insert(bookmark, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(bookmark)
@@ -53,9 +115,12 @@ export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
     return promise;
 }
 
+// @param bookmark: _id must be defined.
+// @param answer: the url of answer
+// @return Promise
 export function addAnswer(bookmark: Bookmark, answer: string): Promise<string> {
     const promise = new Promise<string>((resolve, reject) => {
-        db.collection('bookmarks').updateOne({ _id: bookmark._id }, { $addToSet: { answers: answer } }, (err, result) => {
+        db.collection('bookmarks').update({ _id: bookmark._id }, { $addToSet: { answers: answer } }, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(answer);
@@ -73,10 +138,10 @@ export function getUsers(selector: Object): Promise<User[]> {
         db.collection('users').find(selector, (err, cursor) => {
             if (err) {
                 console.log(err);
-                reject(null);
+                reject([]);
 
             } else {
-                cursor.toArray((err, results) => {
+                cursor.toArray((err, results: User[]) => {
                     assert.equal(err, null, "err: cursor.toArray");
                     resolve(results);
                 })
@@ -97,7 +162,7 @@ export function getBookmarkOfUser(userId: mongodb.ObjectID): Promise<Bookmark[]>
                     console.log(err);
                     reject(err);
                 } else {
-                    cursor.toArray((err, results) => {
+                    cursor.toArray((err, results: Bookmark[]) => {
                         assert.equal(err, null, "err: cursor.toArray");
                         resolve(results);
                     });

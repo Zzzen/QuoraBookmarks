@@ -9,6 +9,7 @@
         "./db.ts",
         "./routes/index.ts",
         "./routes/user.ts",
-        "./routes/bookmark.ts"
+        "./routes/bookmark.ts",
+        "./routes/login.ts"
     ]
 }

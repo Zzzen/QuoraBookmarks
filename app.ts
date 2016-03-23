@@ -4,14 +4,17 @@ import * as express from "express";
 import * as bodyParser from "body-parser";
 import errorHandler = require("errorhandler");
 import methodOverride = require("method-override");
+import logger = require("morgan");
 
 import index = require('./routes/index');
 import user = require('./routes/user');
+import login = require('./routes/login');
 
 var app = express();
 
 // Configuration
 
+app.use(logger('dev'));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(methodOverride());
@@ -25,7 +28,7 @@ if (env === 'development') {
 
 app.get('/', index);
 app.use('/user', user);
-
+app.use('/login', login);
 
 app.listen(3000, function() {
     console.log("Express server listening on port %d in %s mode", 3000, app.settings.env);
