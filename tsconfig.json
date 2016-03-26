@@ -10,6 +10,7 @@
         "./routes/index.ts",
         "./routes/user.ts",
         "./routes/bookmark.ts",
-        "./routes/login.ts"
+        "./routes/login.ts",
+        "./public/javascripts/index.ts"
     ]
 }

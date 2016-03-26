@@ -23,13 +23,25 @@ router.post('/', function(req, res, next) {
     };
 
     if (notEmpty(user.hashedPassword) && (notEmpty(user.userName) || notEmpty(user.email))) {
-        db.addUser(user).then((user) => {
+        db.isUserNameOccupied(user.userName).then(
+            (result) => {
+                return db.isEmailOccupied(user.email);
+            },
+            (result) => {
+                res.status(409).send("Username has been occupied");
+            }
+        ).then((result) => {
+            return db.addUser(user);
+        }, (result) => {
+            res.status(409).send("Email has been occupied");
+        }).then((user) => {
             res.send(user);
-        }, (user) => {
-            res.send(user);
+        }, () => {
+            res.status(400).send("Unknown error");
         });
+
     } else {
-        res.status(409).send("");
+        res.status(409).send("Incomplete form.");
     }
 
 

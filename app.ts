@@ -5,6 +5,7 @@ import * as bodyParser from "body-parser";
 import errorHandler = require("errorhandler");
 import methodOverride = require("method-override");
 import logger = require("morgan");
+import cookieParser = require("cookie-parser");
 
 import index = require('./routes/index');
 import user = require('./routes/user');
@@ -19,6 +20,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(methodOverride());
 app.use(express.static(__dirname + '/public'));
+app.set('view engine', 'jade');
+
 
 var env = process.env.NODE_ENV || 'development';
 if (env === 'development') {

@@ -51,6 +51,42 @@ function insertCookie(userId: mongodb.ObjectID): Promise<string>{
     return promise;
 }
 
+// check whether a name has been occupied.
+// @return promise<boolean>
+export function isUserNameOccupied(userName: string): Promise<boolean> {
+    const promise = new Promise<boolean>((resolve, reject)=>{
+        db.collection('users').find({userName: userName}, (err, cursor)=>{
+            cursor.toArray((err, arr)=>{
+                assert.equal(err, null);
+                
+                if(0===arr.length){
+                    resolve(true);
+                }else{
+                    reject(false);
+                }
+            });
+        });
+    });
+    return promise;
+}
+
+// check whether a name has been occupied.
+// @return promise<boolean>
+export function isEmailOccupied(email: string): Promise<boolean>{
+    const promise = new Promise<boolean> ((resolve, reject)=>{
+        db.collection('users').find({email: email}, (err, cursor)=>{
+            cursor.toArray((err, arr)=>{
+                if(0===arr.length){
+                    resolve(true);
+                }else{
+                    reject(false);
+                }
+            });
+        });
+    });
+    return promise;
+}
+
 //@param user: email or userName must be defined, hashedPassword must be defined.
 //@return Promise; resolve(cookie: string), reject("")
 export function varifyUser(user: User): Promise<string> {
@@ -75,7 +111,7 @@ export function varifyUser(user: User): Promise<string> {
                                                      insertCookie(results[0]._id).then((id)=>resolve(id),
                                                                                    (id)=>reject(id));
                                                 }
-                                            })
+                                            });
                                         }
                                     });
     });
@@ -142,7 +178,6 @@ export function getUsers(selector: Object): Promise<User[]> {
 
             } else {
                 cursor.toArray((err, results: User[]) => {
-                    assert.equal(err, null, "err: cursor.toArray");
                     resolve(results);
                 })
             }
@@ -163,7 +198,6 @@ export function getBookmarkOfUser(userId: mongodb.ObjectID): Promise<Bookmark[]>
                     reject(err);
                 } else {
                     cursor.toArray((err, results: Bookmark[]) => {
-                        assert.equal(err, null, "err: cursor.toArray");
                         resolve(results);
                     });
                 }

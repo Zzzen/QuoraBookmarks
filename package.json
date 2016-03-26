@@ -9,6 +9,7 @@
         "method-override": "^2.3.5",
         "ejs": ">= 0.5.0",
         "jade": ">= 1.11.0",
-        "mongodb": ">= 1.4.29"
+        "mongodb": ">= 1.4.29",
+        "cookie-parser": ">= 1.4.0"
   }
 }

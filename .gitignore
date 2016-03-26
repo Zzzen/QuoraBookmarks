@@ -14,6 +14,7 @@ app.js
 app.js.map
 db.js
 db.js.map
+
 routes/bookmark.js
 routes/bookmark.js.map
 routes/index.js
@@ -22,6 +23,9 @@ routes/user.js
 routes/user.js.map
 routes/login.js
 routes/login.js.map
+
+public/javascripts/index.js
+public/javascripts/index.js.map
 
 # Build results
 [Dd]ebug/
