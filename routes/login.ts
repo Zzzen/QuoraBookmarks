@@ -22,9 +22,9 @@ router.post('/', (req, res) => {
     if (notEmpty(user.hashedPassword) && (notEmpty(user.userName || notEmpty(user.email)))) {
         db.varifyUser(user).then(
             (cookie) => (res.send(cookie)),
-            (emptyString) => (res.send(400, emptyString)));
+            () => (res.status(400).send({})));
     }else{
-        res.status(409).send("");
+        res.status(409).send({});
     }
 });
 

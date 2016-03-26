@@ -31,8 +31,8 @@ export interface Cookie {
 }
 
 //@return Promise: string, cookieID
-function insertCookie(userId: mongodb.ObjectID): Promise<string>{
-    const promise = new Promise<string>((resolve, reject) =>{
+function insertCookie(userId: mongodb.ObjectID): Promise<Object>{
+    const promise = new Promise<Object>((resolve, reject) =>{
         const cookie: Cookie = {
             userId: userId,
             date: new Date()
@@ -41,10 +41,13 @@ function insertCookie(userId: mongodb.ObjectID): Promise<string>{
         db.collection('cookies').insert(cookie, (err, results) =>{
             if(err){ 
                 console.log(err);
-                reject("");
+                reject({});
             }else{
                 assert.notEqual(cookie._id, null, "fail to insert cookie");
-                resolve(cookie._id.toHexString());        
+                resolve({
+                    userId: userId,
+                    cookie: cookie._id.toHexString()
+                })
             }
         });
     });
@@ -89,8 +92,8 @@ export function isEmailOccupied(email: string): Promise<boolean>{
 
 //@param user: email or userName must be defined, hashedPassword must be defined.
 //@return Promise; resolve(cookie: string), reject("")
-export function varifyUser(user: User): Promise<string> {
-    const promise = new Promise<string>((resolve, reject) =>{
+export function varifyUser(user: User): Promise<Object> {
+    const promise = new Promise<Object>((resolve, reject) =>{
         db.collection('users').find({$and: [{hashedPassword: user.hashedPassword}, 
                                             {$or: [
                                                     {$and: [{email: {$ne: null}}, {email: user.email}]},
@@ -106,7 +109,7 @@ export function varifyUser(user: User): Promise<string> {
                                             cursor.toArray((err, results: User[]) => {
                                                 assert.equal(err, null, "err: cursor.toArray");
                                                 if(results.length===0){
-                                                    reject('');
+                                                    reject({});
                                                 }else{
                                                      insertCookie(results[0]._id).then((id)=>resolve(id),
                                                                                    (id)=>reject(id));
