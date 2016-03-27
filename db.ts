@@ -57,7 +57,7 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object>{
 export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID>{
     const promise = new Promise<mongodb.ObjectID>((resolve, reject)=>{
         db.collection('cookies').find({_id: mongodb.ObjectID.createFromHexString(cookie)}, (err, cursor)=>{
-            cursor.toArray((err, arr: Cookie[])=>{
+            cursor.toArray((err: Error, arr: Cookie[])=>{
                 if(0===arr.length){
                     reject(null);
                 }else{
@@ -121,7 +121,7 @@ export function varifyUser(user: User): Promise<Object> {
                                             console.log(err);
                                             reject("");
                                         }else{
-                                            cursor.toArray((err, results: User[]) => {
+                                            cursor.toArray((err: Error, results: User[]) => {
                                                 assert.equal(err, null, "err: cursor.toArray");
                                                 if(results.length===0){
                                                     reject({});
@@ -196,7 +196,7 @@ export function getUsers(selector: Object): Promise<User[]> {
                 reject([]);
 
             } else {
-                cursor.toArray((err, results: User[]) => {
+                cursor.toArray((err: Error, results: User[]) => {
                     resolve(results);
                 })
             }
@@ -220,7 +220,7 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
                     console.log(err);
                     reject(err);
                 } else {
-                    cursor.toArray((err, results: Bookmark[]) => {
+                    cursor.toArray((err: Error, results: Bookmark[]) => {
                         resolve(results);
                     });
                 }
@@ -242,7 +242,7 @@ export function getBookmarkById(bookmark: string): Promise<Bookmark>{
                 console.log(err);
                 reject(err);
             }else{
-                cursor.toArray((err, result: Bookmark[])=>{
+                cursor.toArray((err: Error, result: Bookmark[])=>{
                     if(0===result.length){
                         reject("bookmark not found");
                     }else{
