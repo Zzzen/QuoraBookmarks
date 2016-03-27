@@ -20,7 +20,7 @@ export interface Bookmark {
     _id?: mongodb.ObjectID;
     title: string;
     description?: string;
-    creatorId?: string;
+    creatorId?: mongodb.ObjectID;
     answers?: string[];
 }
 
@@ -49,6 +49,21 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object>{
                     cookie: cookie._id.toHexString()
                 })
             }
+        });
+    });
+    return promise;
+}
+
+export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID>{
+    const promise = new Promise<mongodb.ObjectID>((resolve, reject)=>{
+        db.collection('cookies').find({_id: mongodb.ObjectID.createFromHexString(cookie)}, (err, cursor)=>{
+            cursor.toArray((err, arr: Cookie[])=>{
+                if(0===arr.length){
+                    reject(null);
+                }else{
+                    resolve(arr[0].userId);
+                }
+            });
         });
     });
     return promise;
@@ -154,12 +169,13 @@ export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
     return promise;
 }
 
-// @param bookmark: _id must be defined.
+// @param bookmark: string representation of bookmark._id
 // @param answer: the url of answer
 // @return Promise
-export function addAnswer(bookmark: Bookmark, answer: string): Promise<string> {
+export function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID): Promise<string> {
+    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<string>((resolve, reject) => {
-        db.collection('bookmarks').update({ _id: bookmark._id }, { $addToSet: { answers: answer } }, (err, result) => {
+        db.collection('bookmarks').update({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } }, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(answer);
@@ -190,7 +206,11 @@ export function getUsers(selector: Object): Promise<User[]> {
     return promise;
 }
 
-export function getBookmarkOfUser(userId: mongodb.ObjectID): Promise<Bookmark[]> {
+//@brief get bookmarks of an user
+//@param user: string representation of user._id
+//@return Promise<Bookmark[]> may be an empty array
+export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
+    const userId = mongodb.ObjectID.createFromHexString(user);
     const promise = new Promise<Bookmark[]>((resolve, reject) => {
         if (!userId) {
             reject(null);
@@ -208,5 +228,30 @@ export function getBookmarkOfUser(userId: mongodb.ObjectID): Promise<Bookmark[]>
         }
     });
 
+    return promise;
+}
+
+
+//@brief get bookmark by id.
+//@param bookmark: string representation of bookmark._id
+export function getBookmarkById(bookmark: string): Promise<Bookmark>{
+    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
+    const promise = new Promise<Bookmark>((resolve, reject)=>{
+        db.collection('bookmarks').find({_id: bookmarkId}, (err, cursor)=>{
+            if(err){
+                console.log(err);
+                reject(err);
+            }else{
+                cursor.toArray((err, result: Bookmark[])=>{
+                    if(0===result.length){
+                        reject("bookmark not found");
+                    }else{
+                        resolve(result[0]);
+                    }
+                })
+            }
+        })
+    });
+    
     return promise;
 }

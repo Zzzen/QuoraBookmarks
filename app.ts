@@ -10,6 +10,7 @@ import cookieParser = require("cookie-parser");
 import index = require('./routes/index');
 import user = require('./routes/user');
 import login = require('./routes/login');
+import bookmark = require('./routes/bookmark');
 
 var app = express();
 
@@ -32,6 +33,7 @@ if (env === 'development') {
 app.get('/', index);
 app.use('/user', user);
 app.use('/login', login);
+app.use('/bookmark', bookmark);
 
 app.listen(3000, function() {
     console.log("Express server listening on port %d in %s mode", 3000, app.settings.env);

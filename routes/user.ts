@@ -16,7 +16,7 @@ router.get('/', function(req, res, next) {
 });
 
 router.post('/', function(req, res, next) {
-    const user = {
+    const user: db.User = {
         userName: req.body.userName,
         hashedPassword: req.body.hashedPassword,
         email: req.body.email
