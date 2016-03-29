@@ -7,6 +7,10 @@ const notEmpty = function(str: string): boolean {
     return str != null && str.length > 0;
 }
 
+const isValidateId = function(id: string): boolean {
+    return id != null && (12 === id.length || 24 === id.length);
+}
+
 router.get('/', function(req, res, next) {
     db.getUsers(null).then((users) => {
         res.send(users);
@@ -43,8 +47,21 @@ router.post('/', function(req, res, next) {
     } else {
         res.status(409).send("Incomplete form.");
     }
+});
 
-
+// @brief return bookmarks of user
+router.get('/:userId', function(req, res, next){
+   const userId: string = req.params.userId;
+   
+   if(isValidateId(userId)){
+       db.getBookmarksOfUser(userId).then((bookmarks)=>{
+           res.send(bookmarks);
+       }, (err)=>{
+           res.status(400).send({err: err});
+       })
+   }else{
+       res.status(409).send({err: "Invalid userId"})
+   }
 });
 
 export = router;
