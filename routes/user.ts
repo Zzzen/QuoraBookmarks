@@ -27,16 +27,16 @@ router.post('/', function(req, res, next) {
     };
 
     if (notEmpty(user.hashedPassword) && (notEmpty(user.userName) || notEmpty(user.email))) {
-        db.isUserNameOccupied(user.userName).then(
-            (result) => {
-                return db.isEmailOccupied(user.email);
+        db.isUserNameAvailable(user.userName).then(
+            () => {
+                return db.isEmailAvailable(user.email);
             },
-            (result) => {
+            () => {
                 res.status(409).send("Username has been occupied");
             }
-        ).then((result) => {
+        ).then(() => {
             return db.addUser(user);
-        }, (result) => {
+        }, () => {
             res.status(409).send("Email has been occupied");
         }).then((user) => {
             res.send(user);
@@ -50,18 +50,18 @@ router.post('/', function(req, res, next) {
 });
 
 // @brief return bookmarks of user
-router.get('/:userId', function(req, res, next){
-   const userId: string = req.params.userId;
-   
-   if(isValidateId(userId)){
-       db.getBookmarksOfUser(userId).then((bookmarks)=>{
-           res.send(bookmarks);
-       }, (err)=>{
-           res.status(400).send({err: err});
-       })
-   }else{
-       res.status(409).send({err: "Invalid userId"})
-   }
+router.get('/:userId', function(req, res, next) {
+    const userId: string = req.params.userId;
+
+    if (isValidateId(userId)) {
+        db.getBookmarksOfUser(userId).then((bookmarks) => {
+            res.send(bookmarks);
+        }, (err) => {
+            res.status(400).send({ err: err });
+        })
+    } else {
+        res.status(409).send({ err: "Invalid userId" })
+    }
 });
 
 export = router;

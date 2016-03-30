@@ -69,38 +69,46 @@ export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID>{
     return promise;
 }
 
-// check whether a name has been occupied.
-// @return promise<boolean>
-export function isUserNameOccupied(userName: string): Promise<boolean> {
-    const promise = new Promise<boolean>((resolve, reject)=>{
-        db.collection('users').find({userName: userName}, (err, cursor)=>{
-            cursor.toArray((err, arr)=>{
-                assert.equal(err, null);
-                
-                if(0===arr.length){
-                    resolve(true);
-                }else{
-                    reject(false);
-                }
+// check whether a name is available.
+// @return promise<void>
+export function isUserNameAvailable(userName: string): Promise<void> {
+    const promise = new Promise<void>((resolve, reject)=>{
+        if( !userName || 0===userName.length){
+            resolve();
+        }else{
+            db.collection('users').find({$and: [{userName: {$ne: null}}, {userName: userName}]}, (err, cursor)=>{
+                cursor.toArray((err, arr)=>{
+                    assert.equal(err, null);
+                    
+                    if(0===arr.length){
+                        resolve();
+                    }else{
+                        reject();
+                    }
+                });
             });
-        });
+        }
     });
     return promise;
 }
 
-// check whether a name has been occupied.
-// @return promise<boolean>
-export function isEmailOccupied(email: string): Promise<boolean>{
-    const promise = new Promise<boolean> ((resolve, reject)=>{
-        db.collection('users').find({email: email}, (err, cursor)=>{
-            cursor.toArray((err, arr)=>{
-                if(0===arr.length){
-                    resolve(true);
-                }else{
-                    reject(false);
-                }
+// check whether a email address is available.
+// @return promise<void>
+export function isEmailAvailable(email: string): Promise<void>{
+    const promise = new Promise<void> ((resolve, reject)=>{
+        if( !email || 0===email.length){
+            resolve();
+        }else{
+            db.collection('users').find({$and: [{email: {$ne: null}}, {email: email}]}, (err, cursor)=>{
+                cursor.toArray((err, arr)=>{
+                    if(0===arr.length){
+                        resolve();
+                    }else{
+                        reject();
+                    }
+                });
             });
-        });
+        }
     });
     return promise;
 }
