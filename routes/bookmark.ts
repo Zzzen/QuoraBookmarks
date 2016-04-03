@@ -87,7 +87,41 @@ router.post("/:bookmarkId", function(req, res, next) {
     } else {
         res.status(409).send({ err: "Empty" });
     }
+});
 
+// @brief remove an answer of bookmark.
+router.patch("/:bookmarkId", (req, res, next) => {
+    const cookie: string = req.body.cookie;
+    const answer: string = req.body.answer;
+    const bookmarkId: string = req.params.bookmarkId;
+
+    if (notEmpty(answer) && notEmpty(cookie)) {
+        db.getUserByCookie(cookie).then(userId => {
+            return db.removeAnswer(answer, bookmarkId, userId);
+        }, err => {
+            res.status(400).send({ err: "Invalid cookie" });
+        }).then(() => {
+            res.send({});
+        }, err => {
+            res.status(400).send({ err: err });
+        });
+    } else {
+        res.status(409).send({ err: "Empty input" });
+    }
+});
+
+// @brief remove a bookmark
+router.delete("/:bookmarkId", (req, res, next) => {
+    const cookie: string = req.body.cookie;
+    const bookmarkId: string = req.body.bookmarkId;
+
+    if (notEmpty(cookie) && notEmpty(bookmarkId)) {
+        db.getUserByCookie(cookie).then(userId => {
+            return db.removeBookmark(bookmarkId, userId);
+        }, err => {
+            res.status(400).send({ err: "Invalid cookie" });
+        }).then(() => res.send({}), err => res.status(400).send({ err: err }));
+    }
 });
 
 export = router;

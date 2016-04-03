@@ -263,3 +263,33 @@ export function getBookmarkById(bookmark: string): Promise<Bookmark> {
 
     return promise;
 }
+
+// @brief remove an answer of a bookmark
+export function removeAnswer(answer: string, bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("bookmarks").update({_id: bookmarkId, creatorId: userId}, {$pull: {"answers": answer}}, (err, result) => {
+            if (err) {
+                reject(err);
+            }else {
+                resolve();
+            }
+        });
+    });
+    return promise;
+}
+
+export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
+    const promise = new Promise<void> ((resolve, reject) => {
+       db.collection("bookmarks").remove({_id: bookmarkId, creatorId: userId}, err => {
+           if (err) {
+               reject(err);
+           }else {
+               resolve();
+           }
+       });
+    });
+
+    return promise;
+}
