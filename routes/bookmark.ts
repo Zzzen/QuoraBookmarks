@@ -3,17 +3,17 @@ import db = require("../db");
 
 const router = express.Router();
 
-const notEmpty = function(str: string): boolean {
+function notEmpty(str: string): boolean {
     return str != null && str.length > 0;
 }
 
-const isValidateId = function(id: string): boolean {
+function isValidateId(id: string): boolean {
     return id != null && (12 === id.length || 24 === id.length);
 }
 
-//@brief add new bookmark. return _id of bookmark if success.
-//@param : {title: string, cookie: string, description?: string, answers?: string[]}
-router.post('/', function(req, res, next) {
+// @brief add new bookmark. return _id of bookmark if success.
+// @param : {title: string, cookie: string, description?: string, answers?: string[]}
+router.post("/", function(req, res, next) {
     const bookmark: db.Bookmark = {
         title: req.body.title,
         description: req.body.description
@@ -30,7 +30,7 @@ router.post('/', function(req, res, next) {
                 return db.addBookMark(bookmark);
             },
             (err) => {
-                //cookie is invalid
+                // cookie is invalid
                 res.status(400).send({ err: "Invalid cookie" });
             }).then((value) => {
                 res.send(value);
@@ -40,9 +40,9 @@ router.post('/', function(req, res, next) {
     }
 });
 
-//@brief retrieve bookmarks of an user 
-//@param: {userId: string}
-router.get('/', function(req, res, next) {
+// @brief retrieve bookmarks of an user 
+// @param: {userId: string}
+router.get("/", function(req, res, next) {
     const userId: string = req.query.userId;
 
     if (isValidateId(userId)) {
@@ -50,28 +50,28 @@ router.get('/', function(req, res, next) {
             res.send(bookmarks);
         }, () => {
             res.status(404).send({});
-        })
+        });
     } else {
         res.status(409).send({ err: "empty query" });
     }
 });
 
-//@brief get the content of a bookmark
+// @brief get the content of a bookmark
 router.get("/:bookmarkId", function(req, res, next) {
     const bookmarkId: string = req.params.bookmarkId;
 
     if (isValidateId(bookmarkId)) {
         db.getBookmarkById(bookmarkId).then((bookmark) => {
-            res.send(bookmark)
+            res.send(bookmark);
         }, (err) => {
             res.status(404).send({});
-        })
+        });
     } else {
-        res.status(409).send({err: "Invalid bookmark id"});
+        res.status(409).send({ err: "Invalid bookmark id" });
     }
-})
+});
 
-//@brief add answers to a bookmark
+// @brief add answers to a bookmark
 router.post("/:bookmarkId", function(req, res, next) {
     const cookie: string = req.body.cookie;
     const answer: string = req.body.answer;
@@ -80,14 +80,14 @@ router.post("/:bookmarkId", function(req, res, next) {
     if (notEmpty(answer) && notEmpty(cookie)) {
         db.getUserByCookie(cookie).then((userId) => {
             return db.addAnswer(bookmarkId, answer, userId);
-        }, (err) => { res.status(400).send({ err: "Invalid cookie" }) }
+        }, (err) => { res.status(400).send({ err: "Invalid cookie" }); }
         ).then((answer) => {
-            res.send({})
-        }, (err) => { res.status(500).send({ err: err }) })
+            res.send({});
+        }, (err) => { res.status(500).send({ err: err }); });
     } else {
-        res.status(409).send({err: "Empty"});
+        res.status(409).send({ err: "Empty" });
     }
 
-})
+});
 
 export = router;

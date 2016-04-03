@@ -3,15 +3,15 @@ import db = require("../db");
 
 const router = express.Router();
 
-const notEmpty = function(str: string): boolean {
+function notEmpty(str: string): boolean {
     return str != null && str.length > 0;
 }
 
-const isValidateId = function(id: string): boolean {
+function isValidateId(id: string): boolean {
     return id != null && (12 === id.length || 24 === id.length);
 }
 
-router.get('/', function(req, res, next) {
+router.get("/", function(req, res, next) {
     db.getUsers(null).then((users) => {
         res.send(users);
     }, (err) => {
@@ -19,7 +19,7 @@ router.get('/', function(req, res, next) {
     });
 });
 
-router.post('/', function(req, res, next) {
+router.post("/", function(req, res, next) {
     const user: db.User = {
         userName: req.body.userName,
         hashedPassword: req.body.hashedPassword,
@@ -50,7 +50,7 @@ router.post('/', function(req, res, next) {
 });
 
 // @brief return bookmarks of user
-router.get('/:userId', function(req, res, next) {
+router.get("/:userId", function(req, res, next) {
     const userId: string = req.params.userId;
 
     if (isValidateId(userId)) {
@@ -58,9 +58,9 @@ router.get('/:userId', function(req, res, next) {
             res.send(bookmarks);
         }, (err) => {
             res.status(400).send({ err: err });
-        })
+        });
     } else {
-        res.status(409).send({ err: "Invalid userId" })
+        res.status(409).send({ err: "Invalid userId" });
     }
 });
 
