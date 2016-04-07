@@ -13,7 +13,7 @@ export interface User {
     userName: string;
     hashedPassword: string;
     quoraId?: string;
-    bookmarks?: Bookmark;
+    followedBookmarks?: Bookmark[];
 }
 
 export interface Bookmark {
@@ -54,16 +54,15 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
     return promise;
 }
 
+// reject if cookie is invalid.
 export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
     const promise = new Promise<mongodb.ObjectID>((resolve, reject) => {
-        db.collection("cookies").find({_id: mongodb.ObjectID.createFromHexString(cookie)}, (err, cursor) => {
-            cursor.toArray((err: Error, arr: Cookie[]) => {
-                if (0 === arr.length) {
-                    reject(null);
-                }else {
-                    resolve(arr[0].userId);
-                }
-            });
+        db.collection("cookies").find({_id: mongodb.ObjectID.createFromHexString(cookie)}).limit(1).toArray((err: Error, arr: Cookie[]) => {
+            if (0 === arr.length) {
+                reject();
+            }else {
+                resolve(arr[0].userId);
+            }
         });
     });
     return promise;
@@ -76,16 +75,13 @@ export function isUserNameAvailable(userName: string): Promise<void> {
         if ( !userName || 0 === userName.length) {
             resolve();
         }else {
-            db.collection("users").find({$and: [{userName: {$ne: null}}, {userName: userName}]}, (err, cursor) => {
-                cursor.toArray((err, arr) => {
-                    assert.equal(err, null);
-
-                    if (0 === arr.length) {
-                        resolve();
-                    }else {
-                        reject();
-                    }
-                });
+            db.collection("users").find({$and: [{userName: {$ne: null}}, {userName: userName}]}).limit(1).toArray((err, arr) => {
+                assert.equal(err, null);
+                if (0 === arr.length) {
+                    resolve();
+                }else {
+                    reject();
+                }
             });
         }
     });
@@ -99,14 +95,12 @@ export function isEmailAvailable(email: string): Promise<void> {
         if ( !email || 0 === email.length) {
             resolve();
         }else {
-            db.collection("users").find({$and: [{email: {$ne: null}}, {email: email}]}, (err, cursor) => {
-                cursor.toArray((err, arr) => {
-                    if (0 === arr.length) {
-                        resolve();
-                    }else {
-                        reject();
-                    }
-                });
+            db.collection("users").find({$and: [{email: {$ne: null}}, {email: email}]}).limit(1).toArray((err, arr) => {
+                if (0 === arr.length) {
+                    resolve();
+                }else {
+                    reject();
+                }
             });
         }
     });
@@ -124,21 +118,14 @@ export function varifyUser(user: User): Promise<Object> {
                                                   ]
                                             }
                                            ]
-                                    }, (err, cursor) => {
-                                        if (err) {
-                                            console.log(err);
-                                            reject("");
-                                        }else {
-                                            cursor.toArray((err: Error, results: User[]) => {
-                                                assert.equal(err, null, "err: cursor.toArray");
-                                                if (0 === results.length) {
-                                                    reject({});
-                                                }else {
-                                                     insertCookie(results[0]._id).then((id) => resolve(id),
-                                                                                   (id) => reject(id));
-                                                }
-                                            });
-                                        }
+                                    }).toArray((err: Error, results: User[]) => {
+                                        assert.equal(err, null, "err: cursor.toArray");
+                                            if (0 === results.length) {
+                                                reject({});
+                                            }else {
+                                                insertCookie(results[0]._id).then((id) => resolve(id),
+                                                                                  (id) => reject(id));
+                                            }
                                     });
     });
 
@@ -183,7 +170,7 @@ export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
 export function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID): Promise<string> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<string>((resolve, reject) => {
-        db.collection("bookmarks").update({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } }, (err, result) => {
+        db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } }, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(answer);
@@ -198,16 +185,8 @@ export function addAnswer(bookmark: string, answer: string, userId: mongodb.Obje
 
 export function getUsers(selector: Object): Promise<User[]> {
     const promise = new Promise<User[]>((resolve, reject) => {
-        db.collection("users").find(selector, (err, cursor) => {
-            if (err) {
-                console.log(err);
-                reject([]);
-
-            } else {
-                cursor.toArray((err: Error, results: User[]) => {
-                    resolve(results);
-                });
-            }
+        db.collection("users").find(selector).toArray((err: Error, results: User[]) => {
+            resolve(results);
         });
     });
 
@@ -223,15 +202,8 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
         if (!userId) {
             reject(null);
         } else {
-            db.collection("bookmarks").find({ creatorId: userId }, (err, cursor) => {
-                if (err) {
-                    console.log(err);
-                    reject(err);
-                } else {
-                    cursor.toArray((err: Error, results: Bookmark[]) => {
-                        resolve(results);
-                    });
-                }
+            db.collection("bookmarks").find({ creatorId: userId }).toArray((err: Error, results: Bookmark[]) => {
+                resolve(results);
             });
         }
     });
@@ -245,18 +217,11 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
 export function getBookmarkById(bookmark: string): Promise<Bookmark> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection("bookmarks").find({_id: bookmarkId}, (err, cursor) => {
-            if (err) {
-                console.log(err);
-                reject(err);
+        db.collection("bookmarks").find({_id: bookmarkId}).limit(1).toArray((err: Error, result: Bookmark[]) => {
+            if (0 === result.length) {
+                reject("bookmark not found");
             }else {
-                cursor.toArray((err: Error, result: Bookmark[]) => {
-                    if (0 === result.length) {
-                        reject("bookmark not found");
-                    }else {
-                        resolve(result[0]);
-                    }
-                });
+                resolve(result[0]);
             }
         });
     });
@@ -268,7 +233,7 @@ export function getBookmarkById(bookmark: string): Promise<Bookmark> {
 export function removeAnswer(answer: string, bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").update({_id: bookmarkId, creatorId: userId}, {$pull: {"answers": answer}}, (err, result) => {
+        db.collection("bookmarks").updateOne({_id: bookmarkId, creatorId: userId}, {$pull: {"answers": answer}}, (err, result) => {
             if (err) {
                 reject(err);
             }else {
@@ -291,5 +256,20 @@ export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
        });
     });
 
+    return promise;
+}
+
+
+export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
+    const promise = new Promise<void> ((resolve, reject) => {
+        db.collection("users").updateOne({_id: userId}, { $addToSet: { followedBookmarks: bookmarkId } }, (err, result) => {
+            if (err) {
+                reject(err);
+            }else {
+                resolve();
+            }
+        });
+    });
     return promise;
 }
