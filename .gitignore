@@ -15,6 +15,9 @@ app.js.map
 db.js
 db.js.map
 
+test/*.js
+test/*.js.map
+
 routes/bookmark.js
 routes/bookmark.js.map
 routes/index.js

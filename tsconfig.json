@@ -5,13 +5,14 @@
         "noImplicitAny": true
     },
     "files": [
-        "./typings/tsd.d.ts",
+        "./typings/main.d.ts",
         "./app.ts",
         "./db.ts",
         "./routes/index.ts",
         "./routes/user.ts",
         "./routes/bookmark.ts",
         "./routes/login.ts",
-        "./public/javascripts/index.ts"
+        "./public/javascripts/index.ts",
+        "./test/index.ts"
     ]
 }

@@ -33,20 +33,20 @@ router.post("/", function(req, res, next) {
                 return db.isEmailAvailable(user.email);
             },
             () => {
-                res.status(409).send("Username has been occupied");
+                res.status(400).send({ err: "Username has been occupied" });
             }
         ).then(() => {
             return db.addUser(user);
         }, () => {
-            res.status(409).send("Email has been occupied");
+            res.status(400).send({ err: "Email has been occupied" });
         }).then((user) => {
             res.send(user);
         }, () => {
-            res.status(400).send("Unknown error");
+            res.status(500).send({ err: "Unknown error" });
         });
 
     } else {
-        res.status(409).send("Incomplete form.");
+        res.status(409).send({ err: "Incomplete form." });
     }
 });
 
@@ -85,6 +85,22 @@ router.put("/", (req, res, next) => {
         });
     } else {
         res.status(409).send({ err: "Illegal user id or bookmark id" });
+    }
+});
+
+router.delete("/", (req, res) => {
+    const cookie: string = req.body.cookie;
+
+    if (notEmpty(cookie)) {
+        db.getUserByCookie(cookie).then(userId => {
+            db.removeUser(userId).then(() => {
+                res.send({});
+            }, () => { res.status(500).send({ err: "Unknown" }); });
+        }, err => {
+            res.status(400).send({ err: "Invalid cookie" });
+        });
+    } else {
+        res.status(409).send({ err: "Empty cookie" });
     }
 });
 

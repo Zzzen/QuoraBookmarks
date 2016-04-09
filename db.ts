@@ -3,7 +3,7 @@ import assert = require("assert");
 import {Promise} from "es6-promise";
 
 
-const server = new mongodb.Server("localhost", 27017, { auto_reconnect: true });
+const server = new mongodb.Server("localhost", 27017);
 const db = new mongodb.Db("mydb", server, { w: 1 });
 db.open((err, _) => { if (err) console.log(err); });
 
@@ -38,7 +38,7 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
             date: new Date()
         };
 
-        db.collection("cookies").insert(cookie, (err, results) => {
+        db.collection("cookies").insertOne(cookie, (err, results) => {
             if (err) {
                 console.log(err);
                 reject({});
@@ -135,7 +135,7 @@ export function varifyUser(user: User): Promise<Object> {
 // @param user: email, userName, hashedPassword must be defined.
 export function addUser(user: User): Promise<User> {
     const promise = new Promise<User>((resolve, reject) => {
-        db.collection("users").insert(user, (err, result) => {
+        db.collection("users").insertOne(user, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(user);
@@ -151,7 +151,7 @@ export function addUser(user: User): Promise<User> {
 // @param bookmark: creatorId, title must be defined.
 export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
     const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection("bookmarks").insert(bookmark, (err, result) => {
+        db.collection("bookmarks").insertOne(bookmark, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(bookmark);
@@ -247,7 +247,7 @@ export function removeAnswer(answer: string, bookmark: string, userId: mongodb.O
 export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void> ((resolve, reject) => {
-       db.collection("bookmarks").remove({_id: bookmarkId, creatorId: userId}, err => {
+       db.collection("bookmarks").deleteOne({_id: bookmarkId, creatorId: userId}, err => {
            if (err) {
                reject(err);
            }else {
@@ -268,6 +268,20 @@ export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
                 reject(err);
             }else {
                 resolve();
+            }
+        });
+    });
+    return promise;
+}
+
+export function removeUser(userId: mongodb.ObjectID): Promise<void> {
+    const promise = new Promise<void> ((resolve, reject) => {
+        db.collection("users").deleteOne({_id: userId}, (err, result) => {
+            console.log("result");
+            if (1 === result.deletedCount ) {
+                resolve();
+            }else {
+                reject();
             }
         });
     });

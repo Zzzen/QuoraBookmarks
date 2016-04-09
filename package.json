@@ -1,15 +1,16 @@
 {
-    "name": "QuoraBookmarks",
-    "version": "0.0.1",
-    "private": true,
-    "dependencies": {
-        "express": "^4.13.3",
-        "body-parser": "^1.14.1",
-        "errorhandler": "^1.4.2",
-        "method-override": "^2.3.5",
-        "ejs": ">= 0.5.0",
-        "jade": ">= 1.11.0",
-        "mongodb": ">= 1.4.29",
-        "cookie-parser": ">= 1.4.0"
+  "name": "QuoraBookmarks",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.14.1",
+    "cookie-parser": ">= 1.4.0",
+    "ejs": ">= 0.5.0",
+    "errorhandler": "^1.4.2",
+    "express": "^4.13.3",
+    "jade": ">= 1.11.0",
+    "method-override": "^2.3.5",
+    "mongodb": ">= 1.4.29",
+    "should": "^8.3.0"
   }
 }

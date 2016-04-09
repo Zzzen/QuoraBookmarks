@@ -90,7 +90,7 @@ router.post("/:bookmarkId", function(req, res, next) {
 });
 
 // @brief remove an answer of bookmark.
-router.patch("/:bookmarkId", (req, res, next) => {
+router.put("/:bookmarkId", (req, res, next) => {
     const cookie: string = req.body.cookie;
     const answer: string = req.body.answer;
     const bookmarkId: string = req.params.bookmarkId;
@@ -106,14 +106,14 @@ router.patch("/:bookmarkId", (req, res, next) => {
             res.status(400).send({ err: err });
         });
     } else {
-        res.status(409).send({ err: "Empty input" });
+        res.status(409).send({ err: "Empty answer or cookie" });
     }
 });
 
 // @brief remove a bookmark
 router.delete("/:bookmarkId", (req, res, next) => {
     const cookie: string = req.body.cookie;
-    const bookmarkId: string = req.body.bookmarkId;
+    const bookmarkId: string = req.params.bookmarkId;
 
     if (notEmpty(cookie) && notEmpty(bookmarkId)) {
         db.getUserByCookie(cookie).then(userId => {
@@ -121,6 +121,8 @@ router.delete("/:bookmarkId", (req, res, next) => {
         }, err => {
             res.status(400).send({ err: "Invalid cookie" });
         }).then(() => res.send({}), err => res.status(400).send({ err: err }));
+    } else {
+        res.status(409).send({ err: "Empty cookie" });
     }
 });
 

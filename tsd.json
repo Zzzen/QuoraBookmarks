@@ -18,7 +18,7 @@
       "commit": "fc341765ebbb04b7109981a25dced01f488f4d94"
     },
     "node/node.d.ts": {
-      "commit": "fc341765ebbb04b7109981a25dced01f488f4d94"
+      "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
     },
     "method-override/method-override.d.ts": {
       "commit": "fc341765ebbb04b7109981a25dced01f488f4d94"
@@ -28,6 +28,15 @@
     },
     "body-parser/body-parser.d.ts": {
       "commit": "fc341765ebbb04b7109981a25dced01f488f4d94"
+    },
+    "mocha/mocha.d.ts": {
+      "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
+    },
+    "supertest/supertest.d.ts": {
+      "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
+    },
+    "superagent/superagent.d.ts": {
+      "commit": "ec9eb4b28c74665a602c22db3457f0a76fa0fa23"
     }
   }
 }
