@@ -1,0 +1,44 @@
+doctype html
+html(lang="en")
+    head
+        meta(charset="utf-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+        link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+        title Hello
+    body
+        h1= title
+        div.row(style="margin-left:10px; margin-right: 10px")
+            div.list-group.col-md-8
+                for answer in answers
+                    - var beautified = answer.replace("https://www.quora.com/", "").replace(/\-/g, " ").replace("/answer/", " -- ").replace(/\s\d+/g, "")
+                    a.list-group-item(href=answer)= beautified
+            div.col-md-4
+                div.center-block
+                    a(style="display:block;text-align:center;" href="http://thecatapi.com")
+                        img#cat(src="http://thecatapi.com/api/images/get?format=src&type=gif&size=small")
+                    div#profile(style="display: none;")
+                        h2#profileUsername(style="text-align:center;")
+                        div.btn-group.btn-group-justified
+                            div.btn-group
+                                button#follow.btn.btn-primary Follow this bookmark
+                            div.btn-group
+                                button#logout.btn.btn-primary Logout
+
+                form
+                    fieldset.form-group.has-success.has-danger
+                        label Username
+                        input#username.form-control(type="username" required="true")
+                    fieldset.form-group.has-success.has-danger
+                        label Password
+                        input#password.form-control(type="password" required="true")
+                    div.btn-group.btn-group-justified
+                        div.btn-group
+                            button#register.btn.btn-primary Register
+                        div.btn-group
+                            button#login.btn.btn-primary Login
+
+        script(src="https://code.jquery.com/jquery-1.12.3.min.js" integrity="sha256-aaODHAgvwQW1bFOGXMeX+pC4PZIPsvn2h1sArYOhgXQ=" crossorigin="anonymous")
+        script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous")
+        script(src="/javascripts/cookies.js")
+        script(src="/javascripts/bookmark.js")

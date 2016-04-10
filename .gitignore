@@ -29,6 +29,8 @@ routes/login.js.map
 
 public/javascripts/index.js
 public/javascripts/index.js.map
+public/javascripts/bookmark.js
+public/javascripts/bookmark.js.map
 
 # Build results
 [Dd]ebug/

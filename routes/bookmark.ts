@@ -59,10 +59,15 @@ router.get("/", function(req, res, next) {
 // @brief get the content of a bookmark
 router.get("/:bookmarkId", function(req, res, next) {
     const bookmarkId: string = req.params.bookmarkId;
+    const action: string = req.query.action;
 
     if (isValidateId(bookmarkId)) {
         db.getBookmarkById(bookmarkId).then((bookmark) => {
-            res.send(bookmark);
+            if ("share" === action) {
+                res.render("sharedBookmark.jade", { title: bookmark.title, answers: bookmark.answers });
+            } else {
+                res.send(bookmark);
+            }
         }, (err) => {
             res.status(404).send({});
         });

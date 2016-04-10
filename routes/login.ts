@@ -22,7 +22,7 @@ router.post("/", (req, res) => {
     if (notEmpty(user.hashedPassword) && (notEmpty(user.userName || notEmpty(user.email)))) {
         db.varifyUser(user).then(
             (cookie) => {
-                res.cookie("cookie", cookie);
+                // res.cookie("cookie", cookie);
                 res.send(cookie);
             },
             () => { res.status(400).send({ err: "Wrong username or password" }); });
