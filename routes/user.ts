@@ -54,35 +54,47 @@ router.post("/", function(req, res, next) {
 router.get("/:userId", function(req, res, next) {
     const userId: string = req.params.userId;
     const showAnswers: string = req.query.showAnswers;
+    const toReturn: string = req.query.toReturn;
 
     if (isValidateId(userId)) {
-        db.getBookmarksOfUser(userId).then((bookmarks) => {
-            if ("0" === showAnswers) {
-                for (let i = 0; i < bookmarks.length; i++) {
-                    bookmarks[i].answers = undefined;
+        if ("followedBookmarks" === toReturn) {
+            db.getFollowedBookmarks(userId).then((bookmarks) => {
+                res.send(bookmarks);
+            }, err => res.status(400).send({ err }));
+        } else {
+            db.getBookmarksOfUser(userId).then((bookmarks) => {
+                if ("0" === showAnswers) {
+                    bookmarks.map(x => x.answers = undefined);
                 }
-            }
-            res.send(bookmarks);
-        }, (err) => {
-            res.status(400).send({ err: err });
-        });
+                res.send(bookmarks);
+            }, (err) => {
+                res.status(400).send({ err: err });
+            });
+        }
     } else {
         res.status(409).send({ err: "Invalid userId" });
     }
 });
 
+// follow or unfollow bookmark
 router.put("/", (req, res, next) => {
     const bookmarkToFollow: string = req.body.bookmarkToFollow;
+    const bookmarkToUnfollow: string = req.body.bookmarkToUnfollow;
     const cookie: string = req.body.cookie;
 
     if (isValidateId(bookmarkToFollow) && notEmpty(cookie)) {
         db.getUserByCookie(cookie).then((userId) => {
-            db.followBookmark(bookmarkToFollow, userId).then(() => {
-                res.status(200).send({});
-            });
-        }, (err) => {
-            res.status(400).send({ err: "Invalid cookie" });
-        });
+            db.followBookmark(bookmarkToFollow, userId).then(
+                () => { res.status(200).send({}); },
+                err => { res.status(500).send({ err: "Unknow error" }); });
+        }, err => { res.status(400).send({ err: "Invalid cookie" }); });
+
+    } else if (isValidateId(bookmarkToUnfollow) && notEmpty(cookie)) {
+        db.getUserByCookie(cookie).then(userId => {
+            db.unfollowBookmark(bookmarkToUnfollow, userId).then(
+                () => { res.send({}); },
+                err => { res.status(500).send({ err: "Unknow error" }); });
+        }, err => res.status(400).send({ err: "Invalid cookie" }));
     } else {
         res.status(409).send({ err: "Illegal user id or bookmark id" });
     }

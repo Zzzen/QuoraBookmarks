@@ -1,4 +1,4 @@
-let docCookies: any;
+const docCookies = require("./cookies.js");
 function validateInput(username: string, password: string) {
     const available = /[0-9A-Za-z_\.]+/;
     return username.length > 0 && available.test(password);
@@ -46,7 +46,7 @@ $("#follow").click((event) => {
     }).always((data: any, status: string) => {
         console.log(data);
         if ("success" === status) {
-            alert("Success");
+            $("#follow").text("Followed");
         } else {
             const res = JSON.parse(data.responseText);
             alert(res.err);
@@ -80,6 +80,8 @@ $("#register").click((event) => {
                 alert(res.err);
             }
         });
+    } else {
+        alert("Illegal input");
     }
 });
 
@@ -106,6 +108,8 @@ $("#login").click((event) => {
                 alert(res.err);
             }
         });
+    } else {
+        alert("Illegal input");
     }
 });
 

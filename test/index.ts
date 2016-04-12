@@ -34,6 +34,22 @@ describe("POST /user", () => {
     });
 });
 
+const _userName = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹艹`;
+let _cookie: string;
+let _userId: string;
+
+describe("POST /user", () => {
+    it("should add another user", done => {
+        request(app)
+            .post("/user")
+            .send({ userName: _userName, hashedPassword: hashedPassword })
+            .expect((res: any) => {
+                _userId = res.body._id;
+            })
+            .expect(200, done);
+    });
+});
+
 describe("POST /login", () => {
     it("should login successfully.", done => {
         request(app)
@@ -44,6 +60,18 @@ describe("POST /login", () => {
                 should(res.body).not.ownProperty("err", "should not return err");
                 should(res.body).hasOwnProperty("cookie", "should return a cookie");
                 cookie = res.body.cookie;
+            })
+            .expect(200, done);
+    });
+});
+
+describe("POST /login", () => {
+    it("should login successfully again", done => {
+        request(app)
+            .post("/login")
+            .send({ userName: _userName, hashedPassword: hashedPassword })
+            .expect((res: any) => {
+                _cookie = res.body.cookie;
             })
             .expect(200, done);
     });
@@ -143,6 +171,53 @@ describe("GET /bookmark/:bookmarkId", () => {
     });
 });
 
+console.log("_userId: ${_userId}");
+
+describe("GET /user", () => {
+    it("should return an empty array", done => {
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ toReturn: "followedBookmarks" })
+            .expect("Content-Type", /json/)
+            .expect((res: any) => {
+                should(res.body).is.Array();
+                should(res.body).length(0);
+            })
+            .expect(200, done);
+    });
+});
+
+describe("PUT /user", () => {
+    it("should follow a bookmark", done => {
+        request(app)
+            .put("/user")
+            .send({ cookie: _cookie, bookmarkToFollow: bookmarkId })
+            .expect(200, done);
+    });
+});
+
+describe("GET /user/:userId", () => {
+    it("should return a followed bookmark", done => {
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ toReturn: "followedBookmarks" })
+            .expect((res: any) => {
+                should(res.body).is.Array();
+                should(res.body).length(1);
+            })
+            .expect(200, done);
+    });
+});
+
+describe("PUT /user", () => {
+    it("should unfollow a bookmark", done => {
+        request(app)
+            .put("/user")
+            .send({ cookie: _cookie, bookmarkToUnfollow: bookmarkId })
+            .expect(200, done);
+    });
+});
+
 describe("PUT /bookmark/:bookmarkId", () => {
     it("should remove an answer from bookmark", done => {
         request(app)
@@ -174,6 +249,19 @@ describe("DELETE /user", () => {
         request(app)
             .delete("/user")
             .send({ cookie: cookie })
+            .expect("Content-Type", /json/)
+            .expect((res: any) => {
+                should(res.body).be.empty();
+            })
+            .expect(200, done);
+    });
+});
+
+describe("DELETE /user", () => {
+    it("should delete another user", done => {
+        request(app)
+            .delete("/user")
+            .send({ cookie: _cookie })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.empty();

@@ -1,6 +1,5 @@
 import mongodb = require("mongodb");
 import assert = require("assert");
-import {Promise} from "es6-promise";
 
 
 const server = new mongodb.Server("localhost", 27017);
@@ -13,7 +12,7 @@ export interface User {
     userName: string;
     hashedPassword: string;
     quoraId?: string;
-    followedBookmarks?: Bookmark[];
+    followedBookmarks?: string[];
 }
 
 export interface Bookmark {
@@ -212,6 +211,22 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
 }
 
 
+export function getFollowedBookmarks(user: string): Promise<string[]> {
+    const userId = mongodb.ObjectID.createFromHexString(user);
+    const promise = new Promise<string[]> ((resolve, reject) => {
+        db.collection("users").find({_id: userId}).limit(1).next((err: Error, result: User) => {
+            if (err || !result) {
+                reject(err);
+            } else {
+                resolve(result.followedBookmarks);
+            }
+        });
+    });
+
+    return promise;
+}
+
+
 // @brief get bookmark by id.
 // @param bookmark: string representation of bookmark._id
 export function getBookmarkById(bookmark: string): Promise<Bookmark> {
@@ -261,12 +276,26 @@ export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
 
 
 export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
-    const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void> ((resolve, reject) => {
-        db.collection("users").updateOne({_id: userId}, { $addToSet: { followedBookmarks: bookmarkId } }, (err, result) => {
+        db.collection("users").updateOne({_id: userId}, {$addToSet: {followedBookmarks: bookmark } }, (err, result) => {
             if (err) {
+                console.log(err);
                 reject(err);
             }else {
+                resolve();
+            }
+        });
+    });
+    return promise;
+}
+
+export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const promise = new Promise<void> ((resolve, reject) => {
+        db.collection("users").updateOne({_id: userId}, {$pull: {followedBookmarks: bookmark}}, (err, result) => {
+            if (err) {
+                console.log(err);
+                reject(err);
+            } else {
                 resolve();
             }
         });
