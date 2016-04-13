@@ -31,6 +31,11 @@ public/javascripts/index.js
 public/javascripts/index.js.map
 public/javascripts/bookmark.js
 public/javascripts/bookmark.js.map
+public/javascripts/cookies.js
+public/javascripts/cookies.js.map
+
+public/javascripts/bookmarkBundled.js
+public/javascripts/indexBundled.js
 
 # Build results
 [Dd]ebug/

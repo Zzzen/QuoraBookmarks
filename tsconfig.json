@@ -13,6 +13,7 @@
         "./routes/user.ts",
         "./routes/bookmark.ts",
         "./routes/login.ts",
+        "./public/javascripts/cookies.ts",
         "./public/javascripts/index.ts",
         "./public/javascripts/bookmark.ts",
         "./test/index.ts"

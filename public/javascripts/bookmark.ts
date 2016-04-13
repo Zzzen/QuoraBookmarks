@@ -1,4 +1,4 @@
-const docCookies = require("./cookies.js");
+import docCookies = require("./cookies");
 function validateInput(username: string, password: string) {
     const available = /[0-9A-Za-z_\.]+/;
     return username.length > 0 && available.test(password);
