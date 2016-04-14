@@ -6,6 +6,9 @@ const server = new mongodb.Server("localhost", 27017);
 const db = new mongodb.Db("mydb", server, { w: 1 });
 db.open((err, _) => { if (err) console.log(err); });
 
+export const validateId = "[\\d\\w]{24}";
+export const validateIdReg = /[\d\w]{24}/;
+
 export interface User {
     _id?: mongodb.ObjectID;
     email?: string;
@@ -33,7 +36,7 @@ export interface Cookie {
 function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
     const promise = new Promise<Object>((resolve, reject) => {
         const cookie: Cookie = {
-            userId: userId,
+            userId,
             date: new Date()
         };
 
@@ -44,7 +47,7 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
             }else {
                 assert.notEqual(cookie._id, null, "fail to insert cookie");
                 resolve({
-                    userId: userId,
+                    userId,
                     cookie: cookie._id.toHexString()
                 });
             }
@@ -71,8 +74,8 @@ export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
 // @return promise<void>
 export function isUserNameAvailable(userName: string): Promise<void> {
     const promise = new Promise<void>((resolve, reject) => {
-        if ( !userName || 0 === userName.length) {
-            resolve();
+        if ( !userName ) {
+            reject();
         }else {
             db.collection("users").find({$and: [{userName: {$ne: null}}, {userName: userName}]}).limit(1).toArray((err, arr) => {
                 assert.equal(err, null);
@@ -91,7 +94,7 @@ export function isUserNameAvailable(userName: string): Promise<void> {
 // @return promise<void>
 export function isEmailAvailable(email: string): Promise<void> {
     const promise = new Promise<void> ((resolve, reject) => {
-        if ( !email || 0 === email.length) {
+        if ( !email ) {
             resolve();
         }else {
             db.collection("users").find({$and: [{email: {$ne: null}}, {email: email}]}).limit(1).toArray((err, arr) => {
@@ -199,7 +202,7 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
     const promise = new Promise<Bookmark[]>((resolve, reject) => {
         if (!userId) {
-            reject(null);
+            reject();
         } else {
             db.collection("bookmarks").find({ creatorId: userId }).toArray((err: Error, results: Bookmark[]) => {
                 resolve(results);
@@ -306,7 +309,6 @@ export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Pr
 export function removeUser(userId: mongodb.ObjectID): Promise<void> {
     const promise = new Promise<void> ((resolve, reject) => {
         db.collection("users").deleteOne({_id: userId}, (err, result) => {
-            console.log("result");
             if (1 === result.deletedCount ) {
                 resolve();
             }else {

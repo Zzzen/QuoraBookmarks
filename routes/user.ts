@@ -3,14 +3,6 @@ import db = require("../db");
 
 const router = express.Router();
 
-function notEmpty(str: string): boolean {
-    return str != null && str.length > 0;
-}
-
-function isValidateId(id: string): boolean {
-    return id != null && (12 === id.length || 24 === id.length);
-}
-
 router.get("/", function(req, res, next) {
     db.getUsers(null).then((users) => {
         res.send(users);
@@ -27,7 +19,7 @@ router.post("/", function(req, res, next) {
         followedBookmarks: []
     };
 
-    if (notEmpty(user.hashedPassword) && (notEmpty(user.userName) || notEmpty(user.email))) {
+    if (user.hashedPassword && (user.userName || user.email)) {
         db.isUserNameAvailable(user.userName).then(
             () => {
                 return db.isEmailAvailable(user.email);
@@ -51,29 +43,26 @@ router.post("/", function(req, res, next) {
 });
 
 // @brief return bookmarks of user
-router.get("/:userId", function(req, res, next) {
+router.get(`/:userId(${db.validateId})`, function(req, res, next) {
     const userId: string = req.params.userId;
     const showAnswers: string = req.query.showAnswers;
     const toReturn: string = req.query.toReturn;
 
-    if (isValidateId(userId)) {
-        if ("followedBookmarks" === toReturn) {
-            db.getFollowedBookmarks(userId).then((bookmarks) => {
-                res.send(bookmarks);
-            }, err => res.status(400).send({ err }));
-        } else {
-            db.getBookmarksOfUser(userId).then((bookmarks) => {
-                if ("0" === showAnswers) {
-                    bookmarks.map(x => x.answers = undefined);
-                }
-                res.send(bookmarks);
-            }, (err) => {
-                res.status(400).send({ err: err });
-            });
-        }
+    if ("followedBookmarks" === toReturn) {
+        db.getFollowedBookmarks(userId).then((bookmarks) => {
+            res.send(bookmarks);
+        }, err => res.status(400).send({ err }));
     } else {
-        res.status(409).send({ err: "Invalid userId" });
+        db.getBookmarksOfUser(userId).then((bookmarks) => {
+            if ("0" === showAnswers) {
+                bookmarks.map(x => x.answers = undefined);
+            }
+            res.send(bookmarks);
+        }, (err) => {
+            res.status(400).send({ err: err });
+        });
     }
+
 });
 
 // follow or unfollow bookmark
@@ -82,14 +71,14 @@ router.put("/", (req, res, next) => {
     const bookmarkToUnfollow: string = req.body.bookmarkToUnfollow;
     const cookie: string = req.body.cookie;
 
-    if (isValidateId(bookmarkToFollow) && notEmpty(cookie)) {
+    if (db.validateIdReg.test(bookmarkToFollow) && cookie) {
         db.getUserByCookie(cookie).then((userId) => {
             db.followBookmark(bookmarkToFollow, userId).then(
                 () => { res.status(200).send({}); },
                 err => { res.status(500).send({ err: "Unknow error" }); });
         }, err => { res.status(400).send({ err: "Invalid cookie" }); });
 
-    } else if (isValidateId(bookmarkToUnfollow) && notEmpty(cookie)) {
+    } else if (db.validateIdReg.test(bookmarkToUnfollow) && cookie) {
         db.getUserByCookie(cookie).then(userId => {
             db.unfollowBookmark(bookmarkToUnfollow, userId).then(
                 () => { res.send({}); },
@@ -103,7 +92,7 @@ router.put("/", (req, res, next) => {
 router.delete("/", (req, res) => {
     const cookie: string = req.body.cookie;
 
-    if (notEmpty(cookie)) {
+    if (cookie) {
         db.getUserByCookie(cookie).then(userId => {
             db.removeUser(userId).then(() => {
                 res.send({});
