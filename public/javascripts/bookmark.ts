@@ -1,15 +1,26 @@
 import docCookies = require("./cookies");
+
+const bookmarkId = window.location.pathname.replace(/.*\//g, "");
+
+let isFollowed = false;
+
 function validateInput(username: string, password: string) {
     const available = /[0-9A-Za-z_\.]+/;
     return username.length > 0 && available.test(password);
 }
 
-function getUsername() {
+function getUsername(): string {
     return $("#username").val();
 }
 
-function getPassword() {
+function getPassword(): string {
     return $("#password").val();
+}
+
+function getFollowedBookmarks() {
+    const userId = docCookies.getItem("userId");
+    const toReturn = "followedBookmarks";
+    return $.get(`/user/${userId}`, { toReturn });
 }
 
 function reloadCat() {
@@ -36,22 +47,23 @@ function logout() {
 $("#follow").click((event) => {
     event.preventDefault();
 
-    const bookmarkId = window.location.pathname.replace(/.*\//g, "");
     const cookie = docCookies.getItem("cookie");
+    const action = isFollowed ? "bookmarkToUnfollow" : "bookmarkToFollow";
 
     $.ajax({
         method: "PUT",
         url: "/user",
-        data: { cookie: cookie, bookmarkToFollow: bookmarkId }
-    }).always((data: any, status: string) => {
-        console.log(data);
-        if ("success" === status) {
-            $("#follow").text("Followed");
-        } else {
+        data: { cookie, [action]: bookmarkId }
+    })
+        .done((data: any, statusText: string) => {
+            isFollowed = !isFollowed;
+            $("#follow").text(isFollowed ? "Unfollow" : "Follow");
+
+        })
+        .fail((data: any, statusText: any) => {
             const res = JSON.parse(data.responseText);
             alert(res.err);
-        }
-    });
+        });
 });
 
 $("#logout").click((event) => {
@@ -65,21 +77,16 @@ $("#register").click((event) => {
     const username = getUsername();
     const password = getPassword();
 
-    console.log(username, password);
+    // console.log(username, password);
     if (validateInput(username, password)) {
-        $.ajax({
-            method: "POST",
-            url: "/user",
-            data: { userName: username, hashedPassword: password }
-        }).always((data: any, status: string) => {
-            if ("success" === status) {
-                alert("OK");
+        $.post("/user", { userName: username, hashedPassword: password })
+            .done(res => {
                 $("#login").click();
-            } else {
+            })
+            .fail(data => {
                 const res = JSON.parse(data.responseText);
                 alert(res.err);
-            }
-        });
+            });
     } else {
         alert("Illegal input");
     }
@@ -90,24 +97,19 @@ $("#login").click((event) => {
     const username = getUsername();
     const password = getPassword();
     if (validateInput(username, password)) {
-        $.ajax({
-            method: "POST",
-            url: "/login",
-            data: { userName: username, hashedPassword: password }
-        }).always((data, status) => {
-            if ("success" === status) {
+        $.post("/login", { userName: username, hashedPassword: password })
+            .done((data: any, statusText: string) => {
                 docCookies.setItem("userId", data.userId, Infinity);
                 docCookies.setItem("cookie", data.cookie, Infinity);
                 docCookies.setItem("username", username, Infinity);
                 showProfile();
                 $("#profileUsername").text(username);
                 $("form").remove();
-                alert("You have log in successfully");
-            } else {
+            })
+            .fail((data: any, statusText: string) => {
                 const res = JSON.parse(data.responseText);
                 alert(res.err);
-            }
-        });
+            });
     } else {
         alert("Illegal input");
     }
@@ -120,5 +122,13 @@ if (docCookies.getItem("cookie")) {
     console.log("been logged in");
     $("#profile").attr("style", "");
     $("form").remove();
-    $("#profileUsername").text(docCookies.getItem("username") || "username");
+    $("#profileUsername").text(docCookies.getItem("username") || "Username");
+
+
+    getFollowedBookmarks().done((followedBookmarks: string[]) => {
+        isFollowed = followedBookmarks.indexOf(bookmarkId) > -1;
+        if (isFollowed) {
+            $("#follow").text("Unfollow");
+        }
+    });
 }
