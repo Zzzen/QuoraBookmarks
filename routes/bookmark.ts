@@ -5,7 +5,7 @@ const router = express.Router();
 
 // @brief add new bookmark. return _id of bookmark if success.
 // @param : {title: string, cookie: string, description?: string, answers?: string[]}
-router.post("/", function(req, res, next) {
+router.post("/", function (req, res, next) {
     const bookmark: db.Bookmark = {
         title: req.body.title,
         description: req.body.description
@@ -34,7 +34,7 @@ router.post("/", function(req, res, next) {
 
 // @brief retrieve bookmarks of an user 
 // @param: {userId: string}
-router.get("/", function(req, res, next) {
+router.get("/", function (req, res, next) {
     const userId: string = req.query.userId;
 
     if (db.validateIdReg.test(userId)) {
@@ -49,7 +49,7 @@ router.get("/", function(req, res, next) {
 });
 
 // @brief get the content of a bookmark
-router.get(`/:bookmarkId(${db.validateId})`, function(req, res, next) {
+router.get(`/:bookmarkId(${db.validateId})`, function (req, res, next) {
     const bookmarkId: string = req.params.bookmarkId;
     const action: string = req.query.action;
 
@@ -69,9 +69,8 @@ router.get(`/:bookmarkId(${db.validateId})`, function(req, res, next) {
 });
 
 // @brief add answers to a bookmark
-router.post(`/:bookmarkId(${db.validateId})`, function(req, res, next) {
-    const cookie: string = req.body.cookie;
-    const answer: string = req.body.answer;
+router.post(`/:bookmarkId(${db.validateId})`, function (req, res, next) {
+    const {cookie = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
     if (answer && cookie) {
@@ -88,8 +87,7 @@ router.post(`/:bookmarkId(${db.validateId})`, function(req, res, next) {
 
 // @brief remove an answer of bookmark.
 router.put(`/:bookmarkId(${db.validateId})`, (req, res, next) => {
-    const cookie: string = req.body.cookie;
-    const answer: string = req.body.answer;
+    const {cookie = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
     if (answer && cookie) {

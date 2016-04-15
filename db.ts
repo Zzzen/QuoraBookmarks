@@ -1,5 +1,6 @@
 import mongodb = require("mongodb");
 import assert = require("assert");
+import md5 = require("blueimp-md5");
 
 
 const server = new mongodb.Server("localhost", 27017);
@@ -12,8 +13,9 @@ export const validateIdReg = /[\d\w]{24}/;
 export interface User {
     _id?: mongodb.ObjectID;
     email?: string;
-    userName: string;
-    hashedPassword: string;
+    username: string;
+    hashedPassword?: string;
+    salt?: string;
     quoraId?: string;
     followedBookmarks?: string[];
 }
@@ -44,7 +46,7 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
             if (err) {
                 console.log(err);
                 reject({});
-            }else {
+            } else {
                 assert.notEqual(cookie._id, null, "fail to insert cookie");
                 resolve({
                     userId,
@@ -59,10 +61,10 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
 // reject if cookie is invalid.
 export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
     const promise = new Promise<mongodb.ObjectID>((resolve, reject) => {
-        db.collection("cookies").find({_id: mongodb.ObjectID.createFromHexString(cookie)}).limit(1).toArray((err: Error, arr: Cookie[]) => {
+        db.collection("cookies").find({ _id: mongodb.ObjectID.createFromHexString(cookie) }).limit(1).toArray((err: Error, arr: Cookie[]) => {
             if (0 === arr.length) {
                 reject();
-            }else {
+            } else {
                 resolve(arr[0].userId);
             }
         });
@@ -72,16 +74,16 @@ export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
 
 // check whether a name is available.
 // @return promise<void>
-export function isUserNameAvailable(userName: string): Promise<void> {
+export function isUsernameAvailable(username: string): Promise<void> {
     const promise = new Promise<void>((resolve, reject) => {
-        if ( !userName ) {
+        if (!username) {
             reject();
-        }else {
-            db.collection("users").find({$and: [{userName: {$ne: null}}, {userName: userName}]}).limit(1).toArray((err, arr) => {
+        } else {
+            db.collection("users").find({ $and: [{ username: { $ne: null } }, { username: username }] }).limit(1).toArray((err, arr) => {
                 assert.equal(err, null);
                 if (0 === arr.length) {
                     resolve();
-                }else {
+                } else {
                     reject();
                 }
             });
@@ -93,14 +95,14 @@ export function isUserNameAvailable(userName: string): Promise<void> {
 // check whether a email address is available.
 // @return promise<void>
 export function isEmailAvailable(email: string): Promise<void> {
-    const promise = new Promise<void> ((resolve, reject) => {
-        if ( !email ) {
+    const promise = new Promise<void>((resolve, reject) => {
+        if (!email) {
             resolve();
-        }else {
-            db.collection("users").find({$and: [{email: {$ne: null}}, {email: email}]}).limit(1).toArray((err, arr) => {
+        } else {
+            db.collection("users").find({ $and: [{ email: { $ne: null } }, { email: email }] }).limit(1).toArray((err, arr) => {
                 if (0 === arr.length) {
                     resolve();
-                }else {
+                } else {
                     reject();
                 }
             });
@@ -109,40 +111,45 @@ export function isEmailAvailable(email: string): Promise<void> {
     return promise;
 }
 
-// @param user: email or userName must be defined, hashedPassword must be defined.
+// @param user: email or username must be defined, password must be defined.
 // @return Promise; resolve(cookie: string), reject("")
-export function varifyUser(user: User): Promise<Object> {
+export function varifyUser(user: User, password: string): Promise<Object> {
     const promise = new Promise<Object>((resolve, reject) => {
-        db.collection("users").find({$and: [{hashedPassword: user.hashedPassword},
-                                            {$or: [
-                                                    {$and: [{email: {$ne: null}}, {email: user.email}]},
-                                                    {$and: [{userName: {$ne: null}}, {userName: user.userName}]}
-                                                  ]
-                                            }
-                                           ]
-                                    }).toArray((err: Error, results: User[]) => {
-                                        assert.equal(err, null, "err: cursor.toArray");
-                                            if (0 === results.length) {
-                                                reject({});
-                                            }else {
-                                                insertCookie(results[0]._id).then((id) => resolve(id),
-                                                                                  (id) => reject(id));
-                                            }
-                                    });
+        db.collection("users").find(
+            {
+                $or: [
+                    { $and: [{ email: { $ne: null } }, { email: user.email }] },
+                    { $and: [{ username: { $ne: null } }, { username: user.username }] }
+                ]
+            }
+        ).limit(1).toArray((err: Error, results: User[]) => {
+            assert.equal(err, null, "err: cursor.toArray");
+            if (0 === results.length) {
+                reject("Username not found");
+            } else {
+                const found = results[0];
+                if (hash(password + found.salt) === found.hashedPassword) {
+                    insertCookie(results[0]._id).then((id) => resolve(id),
+                        (id) => reject(id));
+                } else {
+                    reject("Wrong password");
+                }
+            }
+        });
     });
 
     return promise;
 }
 
-// @param user: email, userName, hashedPassword must be defined.
+// @param user: email, username, hashedPassword must be defined.
 export function addUser(user: User): Promise<User> {
     const promise = new Promise<User>((resolve, reject) => {
         db.collection("users").insertOne(user, (err, result) => {
-            if (err) {
+            if (1 === result.insertedCount) {
+                resolve(user);
+            } else {
                 console.log(err);
                 reject(user);
-            } else {
-                resolve(user);
             }
         });
     });
@@ -154,11 +161,11 @@ export function addUser(user: User): Promise<User> {
 export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
     const promise = new Promise<Bookmark>((resolve, reject) => {
         db.collection("bookmarks").insertOne(bookmark, (err, result) => {
-            if (err) {
-                console.log(err);
-                reject(bookmark);
-            } else {
+            if (1 === result.insertedCount) {
                 resolve(bookmark);
+            } else {
+                console.log(err);
+                reject(err);
             }
         });
     });
@@ -216,8 +223,8 @@ export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
 
 export function getFollowedBookmarks(user: string): Promise<string[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
-    const promise = new Promise<string[]> ((resolve, reject) => {
-        db.collection("users").find({_id: userId}).limit(1).next((err: Error, result: User) => {
+    const promise = new Promise<string[]>((resolve, reject) => {
+        db.collection("users").find({ _id: userId }).limit(1).next((err: Error, result: User) => {
             if (err || !result) {
                 reject(err);
             } else {
@@ -235,10 +242,10 @@ export function getFollowedBookmarks(user: string): Promise<string[]> {
 export function getBookmarkById(bookmark: string): Promise<Bookmark> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection("bookmarks").find({_id: bookmarkId}).limit(1).toArray((err: Error, result: Bookmark[]) => {
+        db.collection("bookmarks").find({ _id: bookmarkId }).limit(1).toArray((err: Error, result: Bookmark[]) => {
             if (0 === result.length) {
                 reject("bookmark not found");
-            }else {
+            } else {
                 resolve(result[0]);
             }
         });
@@ -251,10 +258,10 @@ export function getBookmarkById(bookmark: string): Promise<Bookmark> {
 export function removeAnswer(answer: string, bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").updateOne({_id: bookmarkId, creatorId: userId}, {$pull: {"answers": answer}}, (err, result) => {
+        db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $pull: { "answers": answer } }, (err, result) => {
             if (err) {
                 reject(err);
-            }else {
+            } else {
                 resolve();
             }
         });
@@ -264,14 +271,14 @@ export function removeAnswer(answer: string, bookmark: string, userId: mongodb.O
 
 export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<void> ((resolve, reject) => {
-       db.collection("bookmarks").deleteOne({_id: bookmarkId, creatorId: userId}, err => {
-           if (err) {
-               reject(err);
-           }else {
-               resolve();
-           }
-       });
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("bookmarks").deleteOne({ _id: bookmarkId, creatorId: userId }, err => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve();
+            }
+        });
     });
 
     return promise;
@@ -279,12 +286,12 @@ export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
 
 
 export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void> ((resolve, reject) => {
-        db.collection("users").updateOne({_id: userId}, {$addToSet: {followedBookmarks: bookmark } }, (err, result) => {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedBookmarks: bookmark } }, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(err);
-            }else {
+            } else {
                 resolve();
             }
         });
@@ -293,8 +300,8 @@ export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
 }
 
 export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void> ((resolve, reject) => {
-        db.collection("users").updateOne({_id: userId}, {$pull: {followedBookmarks: bookmark}}, (err, result) => {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").updateOne({ _id: userId }, { $pull: { followedBookmarks: bookmark } }, (err, result) => {
             if (err) {
                 console.log(err);
                 reject(err);
@@ -307,14 +314,27 @@ export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Pr
 }
 
 export function removeUser(userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void> ((resolve, reject) => {
-        db.collection("users").deleteOne({_id: userId}, (err, result) => {
-            if (1 === result.deletedCount ) {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").deleteOne({ _id: userId }, (err, result) => {
+            if (1 === result.deletedCount) {
                 resolve();
-            }else {
+            } else {
                 reject();
             }
         });
     });
     return promise;
+}
+
+export function generateGUID() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+            .toString(16)
+            .substring(1);
+    }
+    return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
+}
+
+export function hash(str: string) {
+    return md5(str);
 }

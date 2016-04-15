@@ -14,8 +14,8 @@ describe("GET /", () => {
     });
 });
 
-const userName = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹`;
-const hashedPassword = (new Date()).toISOString().replace(/[-:.]/g, "");
+const username = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹`;
+const password = (new Date()).toISOString().replace(/[-:.]/g, "");
 let cookie: string;
 let userId: string;
 
@@ -23,7 +23,7 @@ describe("POST /user", () => {
     it("should add a user", done => {
         request(app)
             .post("/user")
-            .send({ userName: userName, hashedPassword: hashedPassword })
+            .send({ username, password })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).not.ownProperty("err", "should not return err");
@@ -34,7 +34,7 @@ describe("POST /user", () => {
     });
 });
 
-const _userName = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹艹`;
+const _username = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹艹`;
 let _cookie: string;
 let _userId: string;
 
@@ -42,7 +42,7 @@ describe("POST /user", () => {
     it("should add another user", done => {
         request(app)
             .post("/user")
-            .send({ userName: _userName, hashedPassword: hashedPassword })
+            .send({ username: _username, password})
             .expect((res: any) => {
                 _userId = res.body._id;
             })
@@ -54,7 +54,7 @@ describe("POST /login", () => {
     it("should login successfully.", done => {
         request(app)
             .post("/login")
-            .send({ userName: userName, hashedPassword: hashedPassword })
+            .send({ username, password })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).not.ownProperty("err", "should not return err");
@@ -69,7 +69,7 @@ describe("POST /login", () => {
     it("should login successfully again", done => {
         request(app)
             .post("/login")
-            .send({ userName: _userName, hashedPassword: hashedPassword })
+            .send({ username: _username, password})
             .expect((res: any) => {
                 _cookie = res.body.cookie;
             })
@@ -81,7 +81,7 @@ describe("POST /login", () => {
     it("should fail with empty field", done => {
         request(app)
             .post("/login")
-            .send({ userName: userName })
+            .send({ username: username })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).ownProperty("err");
@@ -94,7 +94,7 @@ describe("POST /login", () => {
     it("should fail with wrong password", done => {
         request(app)
             .post("/login")
-            .send({ userName: userName, hashedPassword: hashedPassword + "CAO" })
+            .send({ username, password: password + "CAO" })
             .expect("Content-Type", /json/)
             .expect(400, done);
     });

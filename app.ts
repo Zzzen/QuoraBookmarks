@@ -35,8 +35,11 @@ app.use("/user", user);
 app.use("/login", login);
 app.use("/bookmark", bookmark);
 
-app.listen(3000, function() {
-    console.log("Express server listening on port %d in %s mode", 3000, app.settings.env);
-});
+if (!module.parent) {
+    // this is the main module
+    app.listen(3000, function () {
+        console.log("Express server listening on port %d in %s mode", 3000, app.settings.env);
+    });
+}
 
 export var App = app;

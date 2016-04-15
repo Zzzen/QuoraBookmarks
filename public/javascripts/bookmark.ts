@@ -79,7 +79,7 @@ $("#register").click((event) => {
 
     // console.log(username, password);
     if (validateInput(username, password)) {
-        $.post("/user", { userName: username, hashedPassword: password })
+        $.post("/user", { username, password })
             .done(res => {
                 $("#login").click();
             })
@@ -97,7 +97,7 @@ $("#login").click((event) => {
     const username = getUsername();
     const password = getPassword();
     if (validateInput(username, password)) {
-        $.post("/login", { userName: username, hashedPassword: password })
+        $.post("/login", { username, password })
             .done((data: any, statusText: string) => {
                 docCookies.setItem("userId", data.userId, Infinity);
                 docCookies.setItem("cookie", data.cookie, Infinity);

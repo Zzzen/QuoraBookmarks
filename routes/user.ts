@@ -3,7 +3,7 @@ import db = require("../db");
 
 const router = express.Router();
 
-router.get("/", function(req, res, next) {
+router.get("/", function (req, res, next) {
     db.getUsers(null).then((users) => {
         res.send(users);
     }, (err) => {
@@ -11,16 +11,21 @@ router.get("/", function(req, res, next) {
     });
 });
 
-router.post("/", function(req, res, next) {
-    const user: db.User = {
-        userName: req.body.userName,
-        hashedPassword: req.body.hashedPassword,
-        email: req.body.email,
-        followedBookmarks: []
-    };
+router.post("/", function (req, res, next) {
 
-    if (user.hashedPassword && (user.userName || user.email)) {
-        db.isUserNameAvailable(user.userName).then(
+    const {username = "", password = "", email = ""} = req.body;
+
+    if (password && (username || email)) {
+        const salt: string = db.generateGUID();
+        const user: db.User = {
+            username,
+            salt,
+            hashedPassword: db.hash(password + salt),
+            email: req.body.email,
+            followedBookmarks: []
+        };
+
+        db.isUsernameAvailable(user.username).then(
             () => {
                 return db.isEmailAvailable(user.email);
             },
@@ -43,10 +48,9 @@ router.post("/", function(req, res, next) {
 });
 
 // @brief return bookmarks of user
-router.get(`/:userId(${db.validateId})`, function(req, res, next) {
+router.get(`/:userId(${db.validateId})`, function (req, res, next) {
     const userId: string = req.params.userId;
-    const showAnswers: string = req.query.showAnswers;
-    const toReturn: string = req.query.toReturn;
+    const {showAnswers = "", toReturn = ""} = req.query;
 
     if ("followedBookmarks" === toReturn) {
         db.getFollowedBookmarks(userId).then((bookmarks) => {
@@ -67,9 +71,7 @@ router.get(`/:userId(${db.validateId})`, function(req, res, next) {
 
 // follow or unfollow bookmark
 router.put("/", (req, res, next) => {
-    const bookmarkToFollow: string = req.body.bookmarkToFollow;
-    const bookmarkToUnfollow: string = req.body.bookmarkToUnfollow;
-    const cookie: string = req.body.cookie;
+    const {bookmarkToFollow = "", bookmarkToUnfollow = "", cookie = ""} = req.body;
 
     if (db.validateIdReg.test(bookmarkToFollow) && cookie) {
         db.getUserByCookie(cookie).then((userId) => {
