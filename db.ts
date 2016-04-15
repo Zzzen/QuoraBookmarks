@@ -31,6 +31,7 @@ export interface Bookmark {
 export interface Cookie {
     _id?: mongodb.ObjectID;
     userId?: mongodb.ObjectID;
+    content: string;
     date: Date;
 }
 
@@ -39,19 +40,19 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
     const promise = new Promise<Object>((resolve, reject) => {
         const cookie: Cookie = {
             userId,
+            content: generateGUID(),
             date: new Date()
         };
 
-        db.collection("cookies").insertOne(cookie, (err, results) => {
-            if (err) {
-                console.log(err);
-                reject({});
-            } else {
-                assert.notEqual(cookie._id, null, "fail to insert cookie");
+        db.collection("cookies").insertOne(cookie, (err, result) => {
+            if (1 === result.insertedCount) {
                 resolve({
                     userId,
-                    cookie: cookie._id.toHexString()
+                    cookie: cookie.content
                 });
+            } else {
+                console.log(err);
+                reject("fail to insert cookie");
             }
         });
     });
@@ -61,7 +62,7 @@ function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
 // reject if cookie is invalid.
 export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
     const promise = new Promise<mongodb.ObjectID>((resolve, reject) => {
-        db.collection("cookies").find({ _id: mongodb.ObjectID.createFromHexString(cookie) }).limit(1).toArray((err: Error, arr: Cookie[]) => {
+        db.collection("cookies").find({ content: cookie }).limit(1).toArray((err: Error, arr: Cookie[]) => {
             if (0 === arr.length) {
                 reject();
             } else {
