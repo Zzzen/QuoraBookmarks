@@ -7,9 +7,9 @@ html(lang="en")
         link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
         title Hello
     body
-        h1= title
         div.row(style="margin-left:10px; margin-right: 10px")
             div.list-group.col-md-8
+                h1(style="text-align:center;")= title
                 for answer in answers
                     - var beautified = answer.replace("https://www.quora.com/", "").replace(/\-/g, " ").replace("/answer/", " -- ").replace(/\s\d+/g, "")
                     a.list-group-item(href=answer)= beautified
