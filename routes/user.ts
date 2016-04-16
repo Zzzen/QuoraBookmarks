@@ -57,10 +57,10 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
             res.send(bookmarks);
         }, err => res.status(400).send({ err }));
     } else {
-        db.getBookmarksOfUser(userId).then((bookmarks) => {
-            if ("0" === showAnswers) {
-                bookmarks.map(x => x.answers = undefined);
-            }
+        const projection = {
+            answers: "0" === showAnswers ? 0 : 1
+        };
+        db.getBookmarksOfUser(userId, projection).then((bookmarks) => {
             res.send(bookmarks);
         }, (err) => {
             res.status(400).send({ err: err });

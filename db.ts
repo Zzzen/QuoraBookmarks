@@ -206,13 +206,13 @@ export function getUsers(selector: Object): Promise<User[]> {
 // @brief get bookmarks of an user
 // @param user: string representation of user._id
 // @return Promise<Bookmark[]> may be an empty array
-export function getBookmarksOfUser(user: string): Promise<Bookmark[]> {
+export function getBookmarksOfUser(user: string, projection?: Object): Promise<Bookmark[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
     const promise = new Promise<Bookmark[]>((resolve, reject) => {
         if (!userId) {
             reject();
         } else {
-            db.collection("bookmarks").find({ creatorId: userId }).toArray((err: Error, results: Bookmark[]) => {
+            db.collection("bookmarks").find({ creatorId: userId }, projection).toArray((err: Error, results: Bookmark[]) => {
                 resolve(results);
             });
         }
@@ -260,10 +260,10 @@ export function removeAnswer(answer: string, bookmark: string, userId: mongodb.O
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void>((resolve, reject) => {
         db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $pull: { "answers": answer } }, (err, result) => {
-            if (err) {
-                reject(err);
-            } else {
+            if (1 === result.modifiedCount) {
                 resolve();
+            } else {
+                reject(err);
             }
         });
     });
@@ -273,11 +273,11 @@ export function removeAnswer(answer: string, bookmark: string, userId: mongodb.O
 export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
     const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").deleteOne({ _id: bookmarkId, creatorId: userId }, err => {
-            if (err) {
-                reject(err);
-            } else {
+        db.collection("bookmarks").deleteOne({ _id: bookmarkId, creatorId: userId }, (err, result) => {
+            if (1 === result.deletedCount) {
                 resolve();
+            } else {
+                reject(err);
             }
         });
     });
@@ -289,11 +289,10 @@ export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
 export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const promise = new Promise<void>((resolve, reject) => {
         db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedBookmarks: bookmark } }, (err, result) => {
-            if (err) {
-                console.log(err);
-                reject(err);
-            } else {
+            if (1 === result.modifiedCount) {
                 resolve();
+            } else {
+                reject(err);
             }
         });
     });
@@ -303,11 +302,10 @@ export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Prom
 export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const promise = new Promise<void>((resolve, reject) => {
         db.collection("users").updateOne({ _id: userId }, { $pull: { followedBookmarks: bookmark } }, (err, result) => {
-            if (err) {
-                console.log(err);
-                reject(err);
-            } else {
+            if (1 === result.modifiedCount) {
                 resolve();
+            } else {
+                reject(err);
             }
         });
     });
