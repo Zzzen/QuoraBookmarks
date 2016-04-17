@@ -18,6 +18,7 @@ export interface User {
     salt?: string;
     quoraId?: string;
     followedBookmarks?: string[];
+    followedUsers?: string[];
 }
 
 export interface Bookmark {

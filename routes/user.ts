@@ -1,5 +1,6 @@
 import express = require("express");
 import db = require("../db");
+import {GetUserOption, GetBookmarkFlags} from "../interfaces";
 
 const router = express.Router();
 
@@ -22,7 +23,8 @@ router.post("/", function (req, res, next) {
             salt,
             hashedPassword: db.hash(password + salt),
             email: req.body.email,
-            followedBookmarks: []
+            followedBookmarks: [],
+            followedUsers: []
         };
 
         db.isUsernameAvailable(user.username).then(
@@ -50,23 +52,24 @@ router.post("/", function (req, res, next) {
 // @brief return bookmarks of user
 router.get(`/:userId(${db.validateId})`, function (req, res, next) {
     const userId: string = req.params.userId;
-    const {showAnswers = "", toReturn = ""} = req.query;
+    const {getBookmarkFlags = "NaN", getUserOption = "NaN"} = req.query;
 
-    if ("followedBookmarks" === toReturn) {
+
+    if (GetUserOption.GetFollowedBookmarks === Number(getUserOption)) {
         db.getFollowedBookmarks(userId).then((bookmarks) => {
             res.send(bookmarks);
         }, err => res.status(400).send({ err }));
     } else {
-        const projection = {
-            answers: "0" === showAnswers ? 0 : 1
-        };
+        let projection: any = {};
+        if (GetBookmarkFlags.IgnoreAnswers & Number(getBookmarkFlags)) {
+            projection["answers"] = false;
+        }
         db.getBookmarksOfUser(userId, projection).then((bookmarks) => {
             res.send(bookmarks);
         }, (err) => {
             res.status(400).send({ err: err });
         });
     }
-
 });
 
 // follow or unfollow bookmark

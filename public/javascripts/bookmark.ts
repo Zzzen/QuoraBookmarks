@@ -1,4 +1,5 @@
 import docCookies = require("./cookies");
+import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
 
 const bookmarkId = window.location.pathname.replace(/.*\//g, "");
 
@@ -19,8 +20,8 @@ function getPassword(): string {
 
 function getFollowedBookmarks() {
     const userId = docCookies.getItem("userId");
-    const toReturn = "followedBookmarks";
-    return $.get(`/user/${userId}`, { toReturn });
+    const getUserOption = GetUserOption.GetFollowedBookmarks;
+    return $.get(`/user/${userId}`, { getUserOption });
 }
 
 function reloadCat() {

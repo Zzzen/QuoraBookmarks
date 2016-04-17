@@ -4,6 +4,7 @@ import express = require("express");
 import should = require("should");
 
 import {App as app} from "../app";
+import {GetUserOption, GetBookmarkFlags} from "../interfaces";
 
 
 describe("GET /", () => {
@@ -42,7 +43,7 @@ describe("POST /user", () => {
     it("should add another user", done => {
         request(app)
             .post("/user")
-            .send({ username: _username, password})
+            .send({ username: _username, password })
             .expect((res: any) => {
                 _userId = res.body._id;
             })
@@ -69,7 +70,7 @@ describe("POST /login", () => {
     it("should login successfully again", done => {
         request(app)
             .post("/login")
-            .send({ username: _username, password})
+            .send({ username: _username, password })
             .expect((res: any) => {
                 _cookie = res.body.cookie;
             })
@@ -132,8 +133,11 @@ describe("POST /bookmark/:bookmarkId", () => {
 
 describe("GET /user/:userId", () => {
     it("should return all bookmarks of an user", done => {
+        const getUserOption = GetUserOption.GetCreatedBookmarks;
+
         request(app)
             .get(`/user/${userId}`)
+            .query({ getUserOption })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.an.Array();
@@ -146,9 +150,12 @@ describe("GET /user/:userId", () => {
 
 describe("GET /user/:userId", () => {
     it("should return all truncated bookmarks of an user", done => {
+        const getUserOption = GetUserOption.GetCreatedBookmarks;
+        const getBookmarkFlags = GetBookmarkFlags.IgnoreAnswers;
+
         request(app)
             .get(`/user/${userId}`)
-            .query({ showAnswers: "0" })
+            .query({ getUserOption, getBookmarkFlags })
             .expect((res: any) => {
                 should(res.body).be.an.Array();
                 should(res.body[0]).not.ownProperty("answers");
@@ -171,13 +178,14 @@ describe("GET /bookmark/:bookmarkId", () => {
     });
 });
 
-console.log("_userId: ${_userId}");
 
 describe("GET /user", () => {
     it("should return an empty array", done => {
+        const getUserOption = GetUserOption.GetFollowedBookmarks;
+
         request(app)
             .get(`/user/${_userId}`)
-            .query({ toReturn: "followedBookmarks" })
+            .query({ getUserOption })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).is.Array();
@@ -198,9 +206,11 @@ describe("PUT /user", () => {
 
 describe("GET /user/:userId", () => {
     it("should return a followed bookmark", done => {
+        const getUserOption = GetUserOption.GetFollowedBookmarks;
+
         request(app)
             .get(`/user/${_userId}`)
-            .query({ toReturn: "followedBookmarks" })
+            .query({ getUserOption })
             .expect((res: any) => {
                 should(res.body).is.Array();
                 should(res.body).length(1);
