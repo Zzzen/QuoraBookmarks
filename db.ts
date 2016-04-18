@@ -313,6 +313,51 @@ export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Pr
     return promise;
 }
 
+export function getFollowedUsers(user: string): Promise<User[]> {
+    const userId = mongodb.ObjectID.createFromHexString(user);
+    const promise = new Promise<User[]>((resolve, reject) => {
+        db.collection("users").find({ _id: userId }).limit(1).next((err: Error, result: User) => {
+            console.log("result: ", result);
+            if (err || !result) {
+                console.log(err);
+                reject(err);
+            } else {
+                db.collection("users").find({ _id: { $in: result.followedUsers.map(mongodb.ObjectID.createFromHexString) } }).toArray((err, results) => {
+                    resolve(results);
+                });
+            }
+        });
+    });
+
+    return promise;
+}
+
+export function followUser(userToFollow: string, userId: mongodb.ObjectID): Promise<void> {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedUsers: userToFollow } }, (err, result) => {
+            if (1 === result.modifiedCount) {
+                resolve();
+            } else {
+                reject(err);
+            }
+        })
+    });
+    return promise;
+}
+
+export function unfollowUser(userToUnfollow: string, userId: mongodb.ObjectID): Promise<void> {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").updateOne({ _id: userId }, { $pull: { followedUsers: userToUnfollow } }, (err, result) => {
+            if (1 === result.modifiedCount) {
+                resolve();
+            } else {
+                reject(err);
+            }
+        })
+    })
+    return promise;
+}
+
 export function removeUser(userId: mongodb.ObjectID): Promise<void> {
     const promise = new Promise<void>((resolve, reject) => {
         db.collection("users").deleteOne({ _id: userId }, (err, result) => {

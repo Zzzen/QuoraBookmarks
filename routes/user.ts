@@ -54,44 +54,79 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
     const userId: string = req.params.userId;
     const {getBookmarkFlags = "NaN", getUserOption = "NaN"} = req.query;
 
+    switch (Number(getUserOption)) {
+        case GetUserOption.GetCreatedBookmarks:
+            // send a array of Bookmark
+            let projection: any = {};
+            if (GetBookmarkFlags.IgnoreAnswers & Number(getBookmarkFlags)) {
+                projection["answers"] = false;
+            }
+            db.getBookmarksOfUser(userId, projection).then((bookmarks) => {
+                res.send(bookmarks);
+            }, (err) => {
+                res.status(400).send({ err: err });
+            });
+            break;
 
-    if (GetUserOption.GetFollowedBookmarks === Number(getUserOption)) {
-        db.getFollowedBookmarks(userId).then((bookmarks) => {
-            res.send(bookmarks);
-        }, err => res.status(400).send({ err }));
-    } else {
-        let projection: any = {};
-        if (GetBookmarkFlags.IgnoreAnswers & Number(getBookmarkFlags)) {
-            projection["answers"] = false;
-        }
-        db.getBookmarksOfUser(userId, projection).then((bookmarks) => {
-            res.send(bookmarks);
-        }, (err) => {
-            res.status(400).send({ err: err });
-        });
+        case GetUserOption.GetFollowedBookmarks:
+            // send an array of bookmarkId
+            db.getFollowedBookmarks(userId).then((bookmarkIds) => {
+                res.send(bookmarkIds);
+            }, err => res.status(400).send({ err }));
+            break;
+
+        case GetUserOption.GetFollowedUsers:
+            // send an array of User
+            db.getFollowedUsers(userId).then(
+                users => { res.send(users); },
+                err => { res.status(400).send({ err }); }
+            )
+            break;
+
+        default:
+            res.status(409).send({ err: "Unknow option" });
     }
 });
 
 // follow or unfollow bookmark
 router.put("/", (req, res, next) => {
-    const {bookmarkToFollow = "", bookmarkToUnfollow = "", cookie = ""} = req.body;
+    const {
+        bookmarkToFollow = "",
+        bookmarkToUnfollow = "",
+        userToFollow = "",
+        userToUnfollow = "",
+        cookie = ""
+    } = req.body;
 
-    if (db.validateIdReg.test(bookmarkToFollow) && cookie) {
-        db.getUserByCookie(cookie).then((userId) => {
-            db.followBookmark(bookmarkToFollow, userId).then(
-                () => { res.status(200).send({}); },
-                err => { res.status(500).send({ err: "Unknow error" }); });
-        }, err => { res.status(400).send({ err: "Invalid cookie" }); });
-
-    } else if (db.validateIdReg.test(bookmarkToUnfollow) && cookie) {
+    if (cookie) {
         db.getUserByCookie(cookie).then(userId => {
-            db.unfollowBookmark(bookmarkToUnfollow, userId).then(
-                () => { res.send({}); },
-                err => { res.status(500).send({ err: "Unknow error" }); });
-        }, err => res.status(400).send({ err: "Invalid cookie" }));
+            if (db.validateIdReg.test(bookmarkToFollow)) {
+                db.followBookmark(bookmarkToFollow, userId).then(
+                    () => { res.status(200).send({}); },
+                    err => { res.status(500).send({ err: "Unknow error" }); });
+
+            } else if (db.validateIdReg.test(bookmarkToUnfollow)) {
+                db.unfollowBookmark(bookmarkToUnfollow, userId).then(
+                    () => { res.send({}); },
+                    err => { res.status(500).send({ err: "Unknow error" }); });
+
+            } else if (db.validateIdReg.test(userToFollow)) {
+                db.followUser(userToFollow, userId).then(
+                    () => { res.status(200).send({}); },
+                    err => { res.status(500).send({ err: "Unknow error" }); });
+
+            } else if (db.validateIdReg.test(userToUnfollow)) {
+                db.unfollowUser(userToUnfollow, userId).then(
+                    () => { res.status(200).send({}); },
+                    err => { res.status(500).send({ err: "Unknow error" }); });
+            }
+
+        }, err => { res.status(400).send({ err: "Invalid cookie" }); })
+
     } else {
-        res.status(409).send({ err: "Illegal user id or bookmark id" });
+        res.status(409).send({ err: "Illegal cookie" });
     }
+
 });
 
 router.delete("/", (req, res) => {

@@ -178,6 +178,74 @@ describe("GET /bookmark/:bookmarkId", () => {
     });
 });
 
+describe("GET /user/:userId", () => {
+    it("should return a empty array of followed users", done => {
+        const getUserOption = GetUserOption.GetFollowedUsers;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption })
+            .expect((res: any) => {
+                should(res.body).be.an.Array();
+                should(res.body).have.length(0);
+            })
+            .expect(200, done);
+    });
+});
+
+describe("PUT /user/", () => {
+    it("should follow a user", done => {
+        const userToFollow = userId;
+        const cookie = _cookie;
+
+        request(app)
+            .put("/user")
+            .send({ userToFollow, cookie })
+            .expect(200, done);
+    });
+});
+
+describe("GET /user/:userId", () => {
+    it("should return a followed user array that has length 1.", done => {
+        const getUserOption = GetUserOption.GetFollowedUsers;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption })
+            .expect((res: any) => {
+                should(res.body).have.length(1);
+                should(res.body[0]._id).equal(userId);
+            })
+            .expect(200, done);
+    })
+})
+
+describe("PUT /user/", () => {
+    it("should unfollow a user", done => {
+        const userToUnfollow = userId;
+        const cookie = _cookie;
+
+        request(app)
+            .put("/user")
+            .send({ userToUnfollow, cookie })
+            .expect(200, done);
+    });
+});
+
+describe("GET /user/:userId", () => {
+    it("should return a empty array of followed users", done => {
+        const getUserOption = GetUserOption.GetFollowedUsers;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption})
+            .expect((res: any) => {
+                should(res.body).be.an.Array();
+                should(res.body).have.length(0);
+            })
+            .expect(200, done);
+    });
+});
 
 describe("GET /user", () => {
     it("should return an empty array", done => {
