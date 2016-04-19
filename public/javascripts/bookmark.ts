@@ -105,7 +105,11 @@ $("#login").click((event) => {
                 docCookies.setItem("username", username, Infinity);
                 showProfile();
                 $("#profileUsername").text(username);
-                $("form").remove();
+                $("#profileUsername").addClass("animated bounceIn");
+                $("form").addClass("animated zoomOutDown");
+                $("form").one("webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend", () => {
+                    $("form").remove();
+                });
             })
             .fail((data: any, statusText: string) => {
                 const res = JSON.parse(data.responseText);

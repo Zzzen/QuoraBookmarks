@@ -4,10 +4,13 @@ html(lang="en")
         meta(charset="utf-8")
         meta(http-equiv="X-UA-Compatible" content="IE=edge")
         meta(name="viewport" content="width=device-width, initial-scale=1")
-        link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css")
+        
+        include ./includes/bootstrapCss.jade
+        style
+            include ../public/stylesheets/animate.min.css
         title Hello
     body
-        div.row(style="margin-left:10px; margin-right: 10px")
+        div.row(class="animated slideInUp" style="margin-left:10px; margin-right: 10px")
             div.list-group.col-md-8
                 h1(style="text-align:center;")= title
                 for answer in answers
@@ -37,7 +40,8 @@ html(lang="en")
                             button#register.btn.btn-primary Register
                         div.btn-group
                             button#login.btn.btn-primary Login
-
-        script(src="https://code.jquery.com/jquery-1.12.3.min.js" integrity="sha256-aaODHAgvwQW1bFOGXMeX+pC4PZIPsvn2h1sArYOhgXQ=" crossorigin="anonymous")
-        script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous")
-        script(src="/javascripts/bookmarkBundled.js")
+        
+        include ./includes/jQuery.jade
+        include ./includes/bootstrapScript.jade
+        script
+            include ../public/javascripts/bookmarkBundled.js
