@@ -1,17 +1,23 @@
 doctype html
 html(lang="en")
     head
-        title Hello World!
-        script(type='text/javascript', src='javascripts/index.js')
-    
-    body
-        h1 Header
-        form(action="user", name="addUser", method="post")
-            div.input
-                p Username:
-                input(type="text", name="username")
-                P Email:
-                input(type="text", name="email")
-                P Password:
-                input(type="password", name="password")
-                input(type="submit", id="submitButton")
+        meta(charset="utf-8")
+        meta(http-equiv="X-UA-Compatible" content="IE=edge")
+        meta(name="viewport" content="width=device-width, initial-scale=1")
+
+        include ./includes/bootstrapCSS.jade
+        style
+            include ../public/stylesheets/animate.min.css
+
+    body(ng-app style="margin-left:20px; margin-right: 20px")
+        h1 Welcome!
+        p There should be some text.
+
+        div.row
+            div.col-md-3
+                ul#userList.list-group
+                    for user in users
+                        li.list-group-item
+                            a(href=`/user/${user._id}`)= user.username
+            div.col-md-8
+                ul#answerList

@@ -35,6 +35,19 @@ describe("POST /user", () => {
     });
 });
 
+describe("POST /user", () => {
+    it("should fail to add a user with same name", done => {
+        request(app)
+            .post("/user")
+            .send({ username, password })
+            .expect("Content-Type", /json/)
+            .expect((res: any) => {
+                should(res.body).has.property("err");
+            })
+            .expect(400, done);
+    });
+})
+
 const _username = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹艹`;
 let _cookie: string;
 let _userId: string;
@@ -238,7 +251,7 @@ describe("GET /user/:userId", () => {
 
         request(app)
             .get(`/user/${_userId}`)
-            .query({ getUserOption})
+            .query({ getUserOption })
             .expect((res: any) => {
                 should(res.body).be.an.Array();
                 should(res.body).have.length(0);

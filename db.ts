@@ -213,7 +213,7 @@ export function getBookmarksOfUser(user: string, projection?: Object): Promise<B
         if (!userId) {
             reject();
         } else {
-            db.collection("bookmarks").find({ creatorId: userId }, projection).toArray((err: Error, results: Bookmark[]) => {
+            db.collection("bookmarks").find({ creatorId: userId }).project(projection).toArray((err: Error, results: Bookmark[]) => {
                 resolve(results);
             });
         }
@@ -382,4 +382,29 @@ export function generateGUID() {
 
 export function hash(str: string) {
     return md5(str);
+}
+
+export function getRandomUser(num: number = 50): Promise<User[]> {
+    const promise = new Promise<User[]>((resolve, reject) => {
+        db.collection("users").aggregate([{ $sample: { size: num } },
+            {
+                $lookup: {
+                    from: "bookmarks",
+                    localField: "_id",
+                    foreignField: "creatorId",
+                    as: "createdBookmarks"
+                }
+            },
+            { $match: { createdBookmarks: { $not: { $size: 0 } } } },
+            { $sample: { size: 2 } }
+        ],
+            (err: Error, results: User[]) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(results);
+                }
+            });
+    });
+    return promise;
 }
