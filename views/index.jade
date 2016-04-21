@@ -17,7 +17,11 @@ html(lang="en")
             div.col-md-3
                 ul#userList.list-group
                     for user in users
-                        li.list-group-item
-                            a(href=`/user/${user._id}`)= user.username
+                        a.list-group-item(href=`/user/${user._id}`)= user.username
             div.col-md-8
-                ul#answerList
+                div.answerList.list-group
+
+    include ./includes/jQuery.jade
+    include ./includes/bootstrapScript.jade
+    script
+        include ../public/javascripts/indexBundled.js
