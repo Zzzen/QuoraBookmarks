@@ -17,8 +17,15 @@ export interface User {
     hashedPassword?: string;
     salt?: string;
     quoraId?: string;
+
     followedBookmarks?: string[];
     followedUsers?: string[];
+
+    bookmarkNotifications?: BookmarkNotification[];
+}
+
+export interface UserWithCreatedBookmark extends User {
+    createdBookmarks: Bookmark[];
 }
 
 export interface Bookmark {
@@ -34,6 +41,20 @@ export interface Cookie {
     userId?: mongodb.ObjectID;
     content: string;
     date: Date;
+}
+
+export interface BookmarkNotification {
+    sourceId?: string;
+    num: number;
+}
+
+function addBookmarkNotification(bookmark: string): Promise<void> {
+    const promise = new Promise<void>((resolve, reject) => {
+        db.collection("users").updateMany({ followedBookmarks: bookmark }, {
+
+        });
+    });
+    return promise;
 }
 
 // @return Promise: string, cookieID
@@ -384,20 +405,21 @@ export function hash(str: string) {
     return md5(str);
 }
 
-export function getRandomUser(num: number = 50): Promise<User[]> {
+export function getRandomUser(num: number = 20): Promise<UserWithCreatedBookmark[]> {
     const promise = new Promise<User[]>((resolve, reject) => {
-        db.collection("users").aggregate([{ $sample: { size: num } },
-            {
-                $lookup: {
-                    from: "bookmarks",
-                    localField: "_id",
-                    foreignField: "creatorId",
-                    as: "createdBookmarks"
-                }
-            },
-            { $match: { createdBookmarks: { $not: { $size: 0 } } } },
-            { $sample: { size: 2 } }
-        ],
+        db.collection("users").aggregate(
+            [
+                { $sample: { size: num } },
+                {
+                    $lookup: {
+                        from: "bookmarks",
+                        localField: "_id",
+                        foreignField: "creatorId",
+                        as: "createdBookmarks"
+                    }
+                },
+                { $match: { createdBookmarks: { $not: { $size: 0 } } } }
+            ],
             (err: Error, results: User[]) => {
                 if (err) {
                     reject(err);

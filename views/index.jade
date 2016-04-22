@@ -15,9 +15,7 @@ html(lang="en")
 
         div.row
             div.col-md-3
-                ul#userList.list-group
-                    for user in users
-                        a.list-group-item(href=`/user/${user._id}`)= user.username
+                ul.userList.list-group
             div.col-md-8
                 div.answerList.list-group
 

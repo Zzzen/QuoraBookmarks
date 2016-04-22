@@ -5,7 +5,7 @@ import {GetUserOption, GetBookmarkFlags} from "../interfaces";
 const router = express.Router();
 
 router.get("/", function (req, res, next) {
-    db.getUsers(null).then((users) => {
+    db.getRandomUser().then((users) => {
         res.send(users);
     }, (err) => {
         res.send(err);
@@ -24,7 +24,8 @@ router.post("/", function (req, res, next) {
             hashedPassword: db.hash(password + salt),
             email: req.body.email,
             followedBookmarks: [],
-            followedUsers: []
+            followedUsers: [],
+            bookmarkNotifications: []
         };
 
         db.isUsernameAvailable(user.username).then(
