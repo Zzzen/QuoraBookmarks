@@ -48,10 +48,65 @@ export interface BookmarkNotification {
     num: number;
 }
 
-function addBookmarkNotification(bookmark: string): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").updateMany({ followedBookmarks: bookmark }, {
+function addBookmarkNotification(bookmark: string) {
+    return db.collection("users").bulkWrite([
+        {
+            updateMany: {
+                filter: {
+                    bookmarkNotifications: {
+                        $elemMatch: {
+                            sourceId: bookmark
+                        }
+                    }
+                },
+                update: {
+                    $inc: {
+                        "bookmarkNotifications.$.num": 1
+                    }
+                }
+            },
+        }, {
+            updateMany: {
+                filter: {
+                    followedBookmarks: bookmark,
+                    "bookmarkNotifications.sourceId": { $nin: [bookmark] }
+                },
+                update: {
+                    $push: {
+                        bookmarkNotifications: {
+                            sourceId: bookmark,
+                            num: 1
+                        }
+                    }
+                }
+            }
+        }
+    ]);
+}
 
+export function removeBookmarkNotification(userId: mongodb.ObjectID, bookmark: string) {
+    return db.collection("users").updateOne(
+        { _id: userId },
+        {
+            $pull: {
+                bookmarkNotifications: {
+                    sourceId: bookmark
+                }
+            }
+        }
+    );
+}
+
+export function getBookmarkNotifications(user: string) {
+    const userId = mongodb.ObjectID.createFromHexString(user);
+
+    const promise = new Promise<BookmarkNotification[]>((resolve, reject) => {
+        db.collection("users").find({ _id: userId }).limit(1).toArray((err: Error, users: User[]) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(users[0].bookmarkNotifications);
+            }
         });
     });
     return promise;
@@ -181,7 +236,7 @@ export function addUser(user: User): Promise<User> {
 }
 
 // @param bookmark: creatorId, title must be defined.
-export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
+export function addBookmark(bookmark: Bookmark): Promise<Bookmark> {
     const promise = new Promise<Bookmark>((resolve, reject) => {
         db.collection("bookmarks").insertOne(bookmark, (err, result) => {
             if (1 === result.insertedCount) {
@@ -199,15 +254,16 @@ export function addBookMark(bookmark: Bookmark): Promise<Bookmark> {
 // @param bookmark: string representation of bookmark._id
 // @param answer: the url of answer
 // @return Promise
-export function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID): Promise<string> {
+export function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID) {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<string>((resolve, reject) => {
+    const promise = new Promise<void>((resolve, reject) => {
         db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } }, (err, result) => {
             if (err) {
                 console.log(err);
-                reject(answer);
+                reject(err);
             } else {
-                resolve(answer);
+                addBookmarkNotification(bookmark);
+                resolve();
             }
         });
     });
@@ -338,7 +394,7 @@ export function getFollowedUsers(user: string): Promise<User[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
     const promise = new Promise<User[]>((resolve, reject) => {
         db.collection("users").find({ _id: userId }).limit(1).next((err: Error, result: User) => {
-            console.log("result: ", result);
+            // console.log("result: ", result);
             if (err || !result) {
                 console.log(err);
                 reject(err);

@@ -19,7 +19,7 @@ router.post("/", function (req, res, next) {
             (userId) => {
                 bookmark.creatorId = userId;
                 bookmark.answers = [];
-                return db.addBookMark(bookmark);
+                return db.addBookmark(bookmark);
             },
             (err) => {
                 // cookie is invalid

@@ -84,6 +84,13 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
             )
             break;
 
+        case GetUserOption.GetBookmarkNotification:
+            db.getBookmarkNotifications(userId).then(
+                notifis => { res.send(notifis); },
+                err => { res.status(500).send({ err }); }
+            )
+            break;
+
         default:
             res.status(409).send({ err: "Unknow option" });
     }
@@ -96,6 +103,7 @@ router.put("/", (req, res, next) => {
         bookmarkToUnfollow = "",
         userToFollow = "",
         userToUnfollow = "",
+        bookmarkNotificationToRemove = "",
         cookie = ""
     } = req.body;
 
@@ -120,6 +128,13 @@ router.put("/", (req, res, next) => {
                 db.unfollowUser(userToUnfollow, userId).then(
                     () => { res.status(200).send({}); },
                     err => { res.status(500).send({ err: "Unknow error" }); });
+            } else if (db.validateIdReg.test(bookmarkNotificationToRemove)) {
+                db.removeBookmarkNotification(userId, bookmarkNotificationToRemove).then(
+                    () => { res.send({}); },
+                    err => { res.status(500).send({ err }); }
+                )
+            } else {
+                res.status(409).send({ err: "Unknow operation" });
             }
 
         }, err => { res.status(400).send({ err: "Invalid cookie" }); })

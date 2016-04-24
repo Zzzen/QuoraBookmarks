@@ -5,6 +5,7 @@ import should = require("should");
 
 import {App as app} from "../app";
 import {GetUserOption, GetBookmarkFlags} from "../interfaces";
+import {BookmarkNotification} from '../db';
 
 
 describe("GET /", () => {
@@ -131,6 +132,33 @@ describe("POST /bookmark", () => {
     });
 });
 
+
+describe("GET /user", () => {
+    it("should return an empty array", done => {
+        const getUserOption = GetUserOption.GetFollowedBookmarks;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption })
+            .expect("Content-Type", /json/)
+            .expect((res: any) => {
+                should(res.body).is.Array();
+                should(res.body).length(0);
+            })
+            .expect(200, done);
+    });
+});
+
+
+describe("PUT /user", () => {
+    it("should follow a bookmark", done => {
+        request(app)
+            .put("/user")
+            .send({ cookie: _cookie, bookmarkToFollow: bookmarkId })
+            .expect(200, done);
+    });
+});
+
 describe("POST /bookmark/:bookmarkId", () => {
     it("should add an answer to bookmark", done => {
         request(app)
@@ -143,6 +171,47 @@ describe("POST /bookmark/:bookmarkId", () => {
             .expect(200, done);
     });
 });
+
+describe("GET /user/$_user", () => {
+    it("should recieve one notification about bookmark", done => {
+        const getUserOption = GetUserOption.GetBookmarkNotification;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption })
+            .expect("Content-Type", /json/)
+            .expect(({body}) => {
+                should(body).have.length(1);
+            })
+            .expect(200, done);
+    });
+});
+
+describe("PUT /user", () => {
+    it("should remove a notification about notificaton", done => {
+        const cookie = _cookie;
+        const bookmarkNotificationToRemove = bookmarkId;
+
+        request(app)
+            .put("/user")
+            .send({ cookie, bookmarkNotificationToRemove })
+            .expect(200, done);
+    });
+
+    it("should recieve zero notification about bookmark", done => {
+        const getUserOption = GetUserOption.GetBookmarkNotification;
+
+        request(app)
+            .get(`/user/${_userId}`)
+            .query({ getUserOption })
+            .expect("Content-Type", /json/)
+            .expect(({body}) => {
+                should(body).have.length(0);
+            })
+            .expect(200, done);
+    });
+});
+
 
 describe("GET /user/:userId", () => {
     it("should return all bookmarks of an user", done => {
@@ -256,31 +325,6 @@ describe("GET /user/:userId", () => {
                 should(res.body).be.an.Array();
                 should(res.body).have.length(0);
             })
-            .expect(200, done);
-    });
-});
-
-describe("GET /user", () => {
-    it("should return an empty array", done => {
-        const getUserOption = GetUserOption.GetFollowedBookmarks;
-
-        request(app)
-            .get(`/user/${_userId}`)
-            .query({ getUserOption })
-            .expect("Content-Type", /json/)
-            .expect((res: any) => {
-                should(res.body).is.Array();
-                should(res.body).length(0);
-            })
-            .expect(200, done);
-    });
-});
-
-describe("PUT /user", () => {
-    it("should follow a bookmark", done => {
-        request(app)
-            .put("/user")
-            .send({ cookie: _cookie, bookmarkToFollow: bookmarkId })
             .expect(200, done);
     });
 });
