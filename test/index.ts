@@ -174,7 +174,7 @@ describe("POST /bookmark/:bookmarkId", () => {
 
 describe("GET /user/$_user", () => {
     it("should recieve one notification about bookmark", done => {
-        const getUserOption = GetUserOption.GetBookmarkNotification;
+        const getUserOption = GetUserOption.GetBookmarkNotifications;
 
         request(app)
             .get(`/user/${_userId}`)
@@ -199,7 +199,7 @@ describe("PUT /user", () => {
     });
 
     it("should recieve zero notification about bookmark", done => {
-        const getUserOption = GetUserOption.GetBookmarkNotification;
+        const getUserOption = GetUserOption.GetBookmarkNotifications;
 
         request(app)
             .get(`/user/${_userId}`)

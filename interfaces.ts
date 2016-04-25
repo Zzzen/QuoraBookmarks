@@ -3,7 +3,7 @@ export enum GetUserOption {
     GetCreatedBookmarks = 1,
     GetFollowedUsers,
     GetFollowedBookmarks,
-    GetBookmarkNotification
+    GetBookmarkNotifications
 }
 
 export enum GetBookmarkFlags {

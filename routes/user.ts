@@ -84,7 +84,7 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
             )
             break;
 
-        case GetUserOption.GetBookmarkNotification:
+        case GetUserOption.GetBookmarkNotifications:
             db.getBookmarkNotifications(userId).then(
                 notifis => { res.send(notifis); },
                 err => { res.status(500).send({ err }); }
