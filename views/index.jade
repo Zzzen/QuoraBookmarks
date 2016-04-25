@@ -8,6 +8,8 @@ html(lang="en")
         include ./includes/bootstrapCSS.jade
         style
             include ../public/stylesheets/animate.min.css
+            include ../public/stylesheets/loaders.min.css
+            include ../public/stylesheets/center.css
 
     body(ng-app style="margin-left:20px; margin-right: 20px")
         h1 Welcome!
@@ -15,9 +17,17 @@ html(lang="en")
 
         div.row
             div.col-md-3
+                a#refresh.btn.btn-primary(style="display:block;text-align:center;" href="#") Refresh
                 ul.userList.list-group
             div.col-md-8
                 div.answerList.list-group
+
+        div#loadingBar(class="center loadingBar" style="display:none;")
+            div.loader-inner.pacman(class="center")
+                div
+                div
+                div
+                div
 
     include ./includes/jQuery.jade
     include ./includes/bootstrapScript.jade

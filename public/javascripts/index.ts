@@ -82,6 +82,11 @@ function switchAnswerList(answers: string[]) {
 }
 
 function refresh() {
+    // display loading bar
+    const loadingBar = $("#loadingBar");
+    loadingBar.fadeIn("fast");
+
+    // retrieve user data
     $.get("/user").done(
         (users: UserWithCreatedBookmark[]) => {
             const $newUserList = $(`<div class = "userList list-group"> </div>`);
@@ -98,10 +103,19 @@ function refresh() {
                 $newUserList.append($user);
             }
 
-            $(".col-md-3").children().remove();
+            $(".col-md-3 .userList").remove();
             $(".col-md-3").append($newUserList);
         }
-    );
+    ).always(() => {
+        loadingBar.fadeOut("fast");
+    });
 }
+
+
+$("#refresh").click(event => {
+    event.preventDefault();
+
+    refresh();
+});
 
 refresh();

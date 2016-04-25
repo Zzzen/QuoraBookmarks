@@ -262,8 +262,11 @@ export function addAnswer(bookmark: string, answer: string, userId: mongodb.Obje
                 console.log(err);
                 reject(err);
             } else {
-                addBookmarkNotification(bookmark);
                 resolve();
+
+                if (1 === result.modifiedCount) {
+                    addBookmarkNotification(bookmark);
+                }
             }
         });
     });
