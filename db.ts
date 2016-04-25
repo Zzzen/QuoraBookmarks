@@ -45,6 +45,7 @@ export interface Cookie {
 
 export interface BookmarkNotification {
     sourceId?: string;
+    title?: string;
     num: number;
 }
 
@@ -102,10 +103,30 @@ export function getBookmarkNotifications(user: string) {
 
     const promise = new Promise<BookmarkNotification[]>((resolve, reject) => {
         db.collection("users").find({ _id: userId }).limit(1).toArray((err: Error, users: User[]) => {
-            if (err) {
+            if (err || 0 === users.length) {
                 reject(err);
+            } else if (0 === users[0].bookmarkNotifications.length) {
+                resolve([]);
             } else {
-                resolve(users[0].bookmarkNotifications);
+                // find and set title for each bookmark.
+                db.collection("bookmarks").find(
+                    {
+                        _id:
+                        { $in: users[0].bookmarkNotifications.map(x => mongodb.ObjectID.createFromHexString(x.sourceId)) }
+                    }).toArray((err: Error, bookmarks: Bookmark[]) => {
+                        const notifis = users[0].bookmarkNotifications;
+                        const idToTitle = new Map<string, string>();
+
+                        bookmarks.forEach(element => {
+                            idToTitle.set(element._id.toHexString(), element.title);
+                        });
+
+                        notifis.forEach(element => {
+                            element.title = idToTitle.get(element.sourceId);
+                        });
+
+                        resolve(notifis);
+                    });
             }
         });
     });
