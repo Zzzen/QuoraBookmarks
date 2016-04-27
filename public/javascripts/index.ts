@@ -56,7 +56,8 @@ function setUserListListener() {
 
 // setUserListListener();
 
-function switchAnswerList(answers: string[]) {
+function switchAnswerList(bookmarks: Bookmark[]) {
+
     const $answerList = $(".answerList");
 
     animateCss($answerList, "rollOut");
@@ -66,14 +67,22 @@ function switchAnswerList(answers: string[]) {
 
         const $newList = $(`<div class = "answerList list-group"> </div>`);
 
-        // create answer list from response
-        $newList.append(
-            answers.map(
-                answer => {
-                    return $(`<a href = ${answer} class="list-group-item">
+        bookmarks.forEach(bookmark => {
+            // add title
+            $newList.append($(`<a href = "/bookmark/${bookmark._id}?action=share" style="font-weight: bold;margin-left: 25%;margin-right: 25%;" class="list-group-item btn btn-primary"> ${bookmark.title} </a>`));
+
+
+            // create answer list from response
+            $newList.append(
+                bookmark.answers.map(
+                    answer => {
+                        return $(`<a href = ${answer} class="list-group-item">
                                   ${answer.replace("https://www.quora.com/", "").replace(/\-/g, " ").replace("/answer/", " -- ").replace(/\s\d+/g, "")}
                               </a>`);
-                }));
+                    }));
+        });
+
+
 
         animateCss($newList, "rollIn");
 
@@ -95,9 +104,7 @@ function refresh() {
                 const $user = $(`<a href = "#" class="list-group-item"> ${user.username} </a>`);
                 $user.click(event => {
                     event.preventDefault();
-                    switchAnswerList(user.createdBookmarks
-                        .map(x => x.answers)
-                        .reduce((prev, current) => { return prev.concat(current) }, []));
+                    switchAnswerList(user.createdBookmarks);
                 })
 
                 $newUserList.append($user);
