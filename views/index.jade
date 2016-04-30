@@ -1,9 +1,10 @@
 doctype html
 html(lang="en")
     head
+        title No title
         meta(charset="utf-8")
         meta(http-equiv="X-UA-Compatible" content="IE=edge")
-        meta(name="viewport" content="width=device-width, initial-scale=1")
+        meta(name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1")
 
         include ./includes/bootstrapCSS.jade
         style
@@ -11,7 +12,8 @@ html(lang="en")
             include ../public/stylesheets/loaders.min.css
             include ../public/stylesheets/center.css
 
-    body(ng-app style="margin-left:20px; margin-right: 20px")
+    //- fontFamily, margin=0, overflow=hidden, background, width=0 and height=0 is set in cat.js :: init()
+    body
         h1 Welcome!
         p There should be some text.
 
@@ -29,7 +31,12 @@ html(lang="en")
                 div
                 div
 
+        canvas#background(style="z-index:-1; position: absolute;  bottom: -35%; left: 0px")
+
+        a.btn.btn-primary(href="http://roxik.com/cat" style="position: absolute; bottom: 30px; left: 30px") Source of CAAAAAAAAAAT
+
     include ./includes/jQuery.jade
     include ./includes/bootstrapScript.jade
     script
         include ../public/javascripts/indexBundled.js
+        include ../public/javascripts/cat.js
