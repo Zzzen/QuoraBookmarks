@@ -12,8 +12,8 @@ html(lang="en")
             include ../public/stylesheets/loaders.min.css
             include ../public/stylesheets/center.css
 
-    //- fontFamily, margin=0, overflow=hidden, background, width=0 and height=0 is set in cat.js :: init()
-    body
+    //- backgroundColor is set in cat.js :: init()
+    body(style="margin:0; padding:0;  width: 100%; height: 100%;")
         h1 Welcome!
         p There should be some text.
 
@@ -31,9 +31,9 @@ html(lang="en")
                 div
                 div
 
-        canvas#background(style="z-index:-10; position: absolute;  bottom: -25%; left: 0px")
+        canvas#background(style="z-index:-10; position: fixed;  bottom: -25%; left: 0px")
 
-        a.btn.btn-primary(href="http://roxik.com/cat" style="z-index: -5; position: absolute; bottom: 30px; left: 30px") Source of CAAAAAAAAAAT
+        a.btn.btn-primary(href="http://roxik.com/cat" style="z-index: -5; position: fixed; bottom: 30px; left: 30px") Source of CAAAAAAAAAAT
 
     include ./includes/jQuery.jade
     include ./includes/bootstrapScript.jade

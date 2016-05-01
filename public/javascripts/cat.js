@@ -2067,11 +2067,11 @@ addListener(window, "load", init);
 //init
 function init() {
     var style = document.body.style;
-    style.fontFamily = "Verdana, Arial, Helvetica, sans-serif";
-    style.margin = style.padding = 0;
-    style.overflow = "hidden";
+    // style.fontFamily = "Verdana, Arial, Helvetica, sans-serif";
+    // style.margin = style.padding = 0;
+    // style.overflow = "hidden";
     style.backgroundColor = bgColor;
-    style.width = style.height = "100%";
+    // style.width = style.height = "100%";
 
     var chk = true;
     var ua = navigator.userAgent.toUpperCase();
