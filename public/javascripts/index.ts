@@ -100,7 +100,7 @@ function refresh() {
         (users: UserWithCreatedBookmark[]) => {
             const $newUserList = $(`<div class = "userList list-group"> </div>`);
 
-            for (const user of users) {
+            users.forEach(user => {
                 const $user = $(`<a href = "#" class="list-group-item"> ${user.username} </a>`);
                 $user.click(event => {
                     event.preventDefault();
@@ -108,7 +108,7 @@ function refresh() {
                 })
 
                 $newUserList.append($user);
-            }
+            });
 
             $(".col-md-3 .userList").remove();
             $(".col-md-3").append($newUserList);
