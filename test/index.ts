@@ -404,3 +404,25 @@ describe("DELETE /user", () => {
             .expect(200, done);
     });
 });
+
+describe("POST /comment", () => {
+    it("should add a comment", done => {
+        const content = "艹艹艹艹";
+
+        request(app)
+            .post("/comment")
+            .send({ content })
+            .expect(200, done);
+    });
+});
+
+describe("GET /comment", () => {
+    it("should return comments", done => {
+        request(app)
+            .get("/comment")
+            .expect((res: any) => {
+                should(res.body).be.an.Array();
+            })
+            .expect(200, done);
+    });
+});

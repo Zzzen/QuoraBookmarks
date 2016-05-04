@@ -1,7 +1,10 @@
-import {Bookmark, UserWithCreatedBookmark} from "../../db";
+import {Bookmark, UserWithCreatedBookmark, Comment} from "../../db";
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
+import * as vue from "vue";
 
 const $answerDiv = $(".col-md-8");
+const $loadingBar = $("#loadingBar");
+
 
 function animateCss($node: JQuery, animationName: string) {
     const animationEnd = "webkitAnimationEnd mozAnimationEnd MSAnimationEnd oanimationend animationend";
@@ -46,8 +49,7 @@ function switchAnswerList(bookmarks: Bookmark[]) {
 
 function refresh() {
     // display loading bar
-    const loadingBar = $("#loadingBar");
-    loadingBar.fadeIn("fast");
+    $loadingBar.fadeIn("fast");
 
     // retrieve user data
     $.get("/user").done(
@@ -68,8 +70,12 @@ function refresh() {
             $(".col-md-3").append($newUserList);
         }
     ).always(() => {
-        loadingBar.fadeOut("fast");
+        $loadingBar.fadeOut("fast");
     });
+}
+
+function getComment(start = 0, length = 10) {
+    return $.get("/comment", { start, length });
 }
 
 
@@ -80,3 +86,30 @@ $("#refresh").click(event => {
 });
 
 refresh();
+
+const vm = new Vue({
+    el: ".mainContainer",
+    data: {
+        content: "",
+        comments: []
+    },
+    methods: {
+        submit(event: MouseEvent) {
+            $loadingBar.fadeIn("fast");
+
+            $.post("/comment", { content: this.content })
+                .done(() => {
+                    this.comments.unshift({ content: this.content, ip: "" });
+                })
+                .fail(err => {
+                    console.log(err);
+                    this.content = err;
+                })
+                .always(() => { $loadingBar.fadeOut("fast"); });
+        }
+    }
+});
+
+getComment().done((comments: Comment[]) => {
+    comments.forEach(x => vm.$data.comments.push(x));
+});

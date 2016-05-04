@@ -14,15 +14,27 @@ html(lang="en")
 
     //- backgroundColor is set in cat.js :: init()
     body(style="margin:0; padding:0;  width: 100%; height: 100%;")
-        h1 Welcome!
-        p There should be some text.
+        div.mainContainer
+            h1 Welcome!
+            p There should be some text.
 
-        div.row
-            div.col-md-3
-                a#refresh.btn.btn-primary(style="display:block;text-align:center;" href="#") Refresh
-                ul.userList.list-group
-            div.col-md-8
-                div.answerList.list-group
+            div.row
+                div.col-md-3
+                    a#refresh.btn.btn-primary(style="display:block;text-align:center;" href="#") Refresh
+                    ul.userList.list-group
+                div.col-md-8
+                    div.answerList.list-group
+
+            div.row
+                div.col-md-5
+                    form#comment.commentContainer(transition="move")
+                        h1 Comment:
+                        textarea.form-control(v-model="content" rows="5" style="width: 100%;" placeholder="Great app! I like it.   o(^o^)o")
+                        button.btn.btn-default(v-on:click.prevent="submit" type="submit") Submit
+                div.col-md-7
+                     div(v-for="comment in comments")
+                        h1 {{comment.ip}}: 
+                        p {{comment.content}}
 
         div#loadingBar(class="center loadingBar" style="display:none;")
             div.loader-inner.pacman(class="center")
@@ -30,6 +42,17 @@ html(lang="en")
                 div
                 div
                 div
+                
+        div#dialog.modal.fade(tabindex="-1" role="dialog" aria-labelledby="...")
+            div.modal-dialog(role="document")
+                div.modal-content
+                    div.modal-header
+                        h1 OK
+                    div.modal-body
+                        p GERSWHRSREGYRE
+                div.modal-footer
+                    button.btn.btn-default(data-dismiss="modal") Close
+                        
 
         canvas#background(style="z-index:-10; position: fixed;  bottom: -25%; left: 0px")
 
@@ -37,6 +60,8 @@ html(lang="en")
 
     include ./includes/jQuery.jade
     include ./includes/bootstrapScript.jade
+    include ./includes/vue.jade
+
     script
         include ../public/javascripts/indexBundled.js
         include ../public/javascripts/cat.js

@@ -11,6 +11,7 @@ import index = require("./routes/index");
 import user = require("./routes/user");
 import login = require("./routes/login");
 import bookmark = require("./routes/bookmark");
+import comment = require("./routes/comment");
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.get("/", index);
 app.use("/user", user);
 app.use("/login", login);
 app.use("/bookmark", bookmark);
+app.use("/comment", comment);
 
 if (!module.parent) {
     // this is the main module

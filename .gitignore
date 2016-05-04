@@ -10,31 +10,23 @@
 typings/
 
 # compiled js
+*.js.map
+
 app.js
-app.js.map
 db.js
-db.js.map
 interfaces.js
-interfaces.js.map
+
 
 test/*.js
-test/*.js.map
 
 routes/bookmark.js
-routes/bookmark.js.map
 routes/index.js
-routes/index.js.map
 routes/user.js
-routes/user.js.map
 routes/login.js
-routes/login.js.map
-
+routes/comment.js
 public/javascripts/index.js
-public/javascripts/index.js.map
 public/javascripts/bookmark.js
-public/javascripts/bookmark.js.map
 public/javascripts/cookies.js
-public/javascripts/cookies.js.map
 
 public/javascripts/bookmarkBundled.js
 public/javascripts/indexBundled.js

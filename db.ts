@@ -49,6 +49,12 @@ export interface BookmarkNotification {
     num: number;
 }
 
+export interface Comment {
+    _id?: mongodb.ObjectID;
+    ip?: string;
+    content: string;
+}
+
 function addBookmarkNotification(bookmark: string) {
     return db.collection("users").bulkWrite([
         {
@@ -509,4 +515,31 @@ export function getRandomUser(num: number = 20): Promise<UserWithCreatedBookmark
             });
     });
     return promise;
+}
+
+export function addComment(comment: Comment) {
+    return new Promise<void>((resolve, reject) => {
+        db.collection("comments").insertOne(comment).then(
+            result => {
+                if (1 === result.insertedCount) {
+                    resolve();
+                } else {
+                    reject();
+                }
+            },
+            err => { reject(err); }
+        );
+    });
+}
+
+export function getComments(start = 0, length = 10) {
+    return new Promise<Comment[]>((resolve, reject) => {
+        db.collection("comments").find({}).sort({ _id: -1 }).toArray((err: Error, result: Comment[]) => {
+            if (err) {
+                reject(err);
+            } else {
+                resolve(result.slice(start, start + length));
+            }
+        });
+    });
 }
