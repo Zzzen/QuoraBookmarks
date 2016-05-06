@@ -5,7 +5,7 @@ const router = express.Router();
 
 // @brief add new bookmark. return _id of bookmark if success.
 // @param : {title: string, cookie: string, description?: string, answers?: string[]}
-router.post("/", function (req, res, next) {
+router.post("/", async (req, res) => {
     const bookmark: db.Bookmark = {
         title: req.body.title,
         description: req.body.description
@@ -15,18 +15,18 @@ router.post("/", function (req, res, next) {
 
 
     if (bookmark.title && cookie) {
-        db.getUserByCookie(cookie).then(
-            (userId) => {
-                bookmark.creatorId = userId;
-                bookmark.answers = [];
-                return db.addBookmark(bookmark);
-            },
-            (err) => {
-                // cookie is invalid
-                res.status(400).send({ err: "Invalid cookie" });
-            }).then((value) => {
-                res.send(value);
-            });
+        try {
+            const userId = await db.getUserByCookie(cookie);
+
+            bookmark.creatorId = userId;
+            bookmark.answers = [];
+
+            const created = await db.addBookmark(bookmark);
+            res.send(created);
+
+        } catch (err) {
+            res.status(400).send({ err: "Invalid cookie" });
+        }
     } else {
         res.status(409).send({});
     }
@@ -34,88 +34,121 @@ router.post("/", function (req, res, next) {
 
 // @brief retrieve bookmarks of an user 
 // @param: {userId: string}
-router.get("/", function (req, res, next) {
+router.get("/", async (req, res) => {
     const userId: string = req.query.userId;
 
     if (db.validateIdReg.test(userId)) {
-        db.getBookmarksOfUser(userId).then((bookmarks) => {
+        try {
+            const bookmarks = await db.getBookmarksOfUser(userId);
             res.send(bookmarks);
-        }, () => {
-            res.status(404).send({});
-        });
+        } catch (err) {
+            res.status(404).send({ err });
+        }
+
     } else {
         res.status(409).send({ err: "empty query" });
     }
 });
 
 // @brief get the content of a bookmark
-router.get(`/:bookmarkId(${db.validateId})`, function (req, res, next) {
+router.get(`/:bookmarkId(${db.validateId})`, async (req, res) => {
     const bookmarkId: string = req.params.bookmarkId;
     const action: string = req.query.action;
 
     if (db.validateIdReg.test(bookmarkId)) {
-        db.getBookmarkById(bookmarkId).then((bookmark) => {
+
+        try {
+            const bookmark = await db.getBookmarkById(bookmarkId);
+
             if ("share" === action) {
                 res.render("sharedBookmark.jade", { title: bookmark.title, answers: bookmark.answers });
             } else {
                 res.send(bookmark);
             }
-        }, (err) => {
-            res.status(404).send({});
-        });
+
+        } catch (err) {
+            res.status(404).send({ err });
+        }
+
     } else {
         res.status(409).send({ err: "Invalid bookmark id" });
     }
 });
 
 // @brief add answers to a bookmark
-router.post(`/:bookmarkId(${db.validateId})`, function (req, res, next) {
+router.post(`/:bookmarkId(${db.validateId})`, async (req, res) => {
     const {cookie = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
     if (answer && cookie) {
-        db.getUserByCookie(cookie).then((userId) => {
-            return db.addAnswer(bookmarkId, answer, userId);
-        }, (err) => { res.status(400).send({ err: "Invalid cookie" }); }
-        ).then((answer) => {
-            res.send({});
-        }, (err) => { res.status(500).send({ err: err }); });
+
+        try {
+            const userId = await db.getUserByCookie(cookie);
+
+            try {
+                await db.addAnswer(bookmarkId, answer, userId);
+                res.send({});
+            } catch (err) {
+                res.status(500).send({ err });
+            }
+
+        } catch (err) {
+            res.status(400).send({ err: "Invalid cookie" });
+        }
+
+
     } else {
         res.status(409).send({ err: "Empty" });
     }
 });
 
 // @brief remove an answer of bookmark.
-router.put(`/:bookmarkId(${db.validateId})`, (req, res, next) => {
+router.put(`/:bookmarkId(${db.validateId})`, async (req, res) => {
     const {cookie = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
     if (answer && cookie) {
-        db.getUserByCookie(cookie).then(userId => {
-            return db.removeAnswer(answer, bookmarkId, userId);
-        }, err => {
+        try {
+            const userId = await db.getUserByCookie(cookie);
+
+            try {
+                await db.removeAnswer(answer, bookmarkId, userId);
+                res.send({});
+            } catch (err) {
+                res.status(500).send({ err });
+            }
+
+        } catch (err) {
             res.status(400).send({ err: "Invalid cookie" });
-        }).then(() => {
-            res.send({});
-        }, err => {
-            res.status(400).send({ err: err });
-        });
+        }
+
     } else {
         res.status(409).send({ err: "Empty answer or cookie" });
     }
 });
 
 // @brief remove a bookmark
-router.delete(`/:bookmarkId(${db.validateId})`, (req, res, next) => {
+router.delete(`/:bookmarkId(${db.validateId})`, async (req, res) => {
     const cookie: string = req.body.cookie;
     const bookmarkId: string = req.params.bookmarkId;
 
     if (cookie && bookmarkId) {
-        db.getUserByCookie(cookie).then(userId => {
-            return db.removeBookmark(bookmarkId, userId);
-        }, err => {
+
+        try {
+            
+            const userId = await db.getUserByCookie(cookie);
+
+            try {
+                await db.removeBookmark(bookmarkId, userId);
+                res.send({});
+            } catch (err) {
+                res.status(500).send({ err });
+            }
+            
+        } catch (err) {
             res.status(400).send({ err: "Invalid cookie" });
-        }).then(() => res.send({}), err => res.status(400).send({ err: err }));
+        }
+
     } else {
         res.status(409).send({ err: "Empty cookie" });
     }

@@ -12,12 +12,12 @@ router.get("/", function (req, res, next) {
     });
 });
 
-router.post("/", function (req, res, next) {
+router.post("/", async (req, res) => {
 
     const {username = "", password = "", email = ""} = req.body;
 
     if (password && (username || email)) {
-        const salt: string = db.generateGUID();
+        const salt = db.generateGUID();
         const user: db.User = {
             username,
             salt,
@@ -28,22 +28,21 @@ router.post("/", function (req, res, next) {
             bookmarkNotifications: []
         };
 
-        db.isUsernameAvailable(user.username).then(
-            () => {
-                return db.isEmailAvailable(user.email);
-            },
-            () => {
-                res.status(400).send({ err: "Username has been occupied" });
+
+        try {
+            await db.isUsernameAvailable(user.username);
+            await db.isEmailAvailable(user.email);
+
+            try {
+                const added = await db.addUser(user);
+                res.send(added);
+            } catch (err) {
+                res.status(500).send({ err });
             }
-        ).then(() => {
-            return db.addUser(user);
-        }, () => {
-            res.status(400).send({ err: "Email has been occupied" });
-        }).then((user) => {
-            res.send(user);
-        }, () => {
-            res.status(500).send({ err: "Unknown error" });
-        });
+
+        } catch (err) {
+            res.status(400).send({ err: "invalid username or email" });
+        }
 
     } else {
         res.status(409).send({ err: "Incomplete form." });
@@ -51,7 +50,7 @@ router.post("/", function (req, res, next) {
 });
 
 // @brief return bookmarks of user
-router.get(`/:userId(${db.validateId})`, function (req, res, next) {
+router.get(`/:userId(${db.validateId})`, async (req, res) => {
     const userId: string = req.params.userId;
     const {getBookmarkFlags = "NaN", getUserOption = "NaN"} = req.query;
 
@@ -62,33 +61,44 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
             if (GetBookmarkFlags.IgnoreAnswers & Number(getBookmarkFlags)) {
                 projection["answers"] = false;
             }
-            db.getBookmarksOfUser(userId, projection).then((bookmarks) => {
+
+            try {
+                const bookmarks = await db.getBookmarksOfUser(userId, projection);
                 res.send(bookmarks);
-            }, (err) => {
-                res.status(400).send({ err: err });
-            });
+            } catch (err) {
+                res.status(400).send({ err });
+
+            }
+
             break;
 
         case GetUserOption.GetFollowedBookmarks:
             // send an array of bookmarkId
-            db.getFollowedBookmarks(userId).then((bookmarkIds) => {
-                res.send(bookmarkIds);
-            }, err => res.status(400).send({ err }));
+            try {
+                const followed = await db.getFollowedBookmarks(userId);
+                res.send(followed);
+            } catch (err) {
+                res.status(400).send({ err });
+            }
             break;
 
         case GetUserOption.GetFollowedUsers:
             // send an array of User
-            db.getFollowedUsers(userId).then(
-                users => { res.send(users); },
-                err => { res.status(400).send({ err }); }
-            )
+            try {
+                const followed = await db.getFollowedUsers(userId);
+                res.send(followed);
+            } catch (err) {
+                res.status(400).send({ err });
+            }
             break;
 
         case GetUserOption.GetBookmarkNotifications:
-            db.getBookmarkNotifications(userId).then(
-                notifis => { res.send(notifis); },
-                err => { res.status(500).send({ err }); }
-            )
+            try {
+                const notifis = await db.getBookmarkNotifications(userId);
+                res.send(notifis);
+            } catch (err) {
+                res.status(500).send({ err });
+            }
             break;
 
         default:
@@ -96,8 +106,7 @@ router.get(`/:userId(${db.validateId})`, function (req, res, next) {
     }
 });
 
-// follow or unfollow bookmark
-router.put("/", (req, res, next) => {
+router.put("/", async (req, res) => {
     const {
         bookmarkToFollow = "",
         bookmarkToUnfollow = "",
@@ -108,54 +117,65 @@ router.put("/", (req, res, next) => {
     } = req.body;
 
     if (cookie) {
-        db.getUserByCookie(cookie).then(userId => {
-            if (db.validateIdReg.test(bookmarkToFollow)) {
-                db.followBookmark(bookmarkToFollow, userId).then(
-                    () => { res.status(200).send({}); },
-                    err => { res.status(500).send({ err: "Unknow error" }); });
 
-            } else if (db.validateIdReg.test(bookmarkToUnfollow)) {
-                db.unfollowBookmark(bookmarkToUnfollow, userId).then(
-                    () => { res.send({}); },
-                    err => { res.status(500).send({ err: "Unknow error" }); });
+        try {
 
-            } else if (db.validateIdReg.test(userToFollow)) {
-                db.followUser(userToFollow, userId).then(
-                    () => { res.status(200).send({}); },
-                    err => { res.status(500).send({ err: "Unknow error" }); });
+            const userId = await db.getUserByCookie(cookie);
 
-            } else if (db.validateIdReg.test(userToUnfollow)) {
-                db.unfollowUser(userToUnfollow, userId).then(
-                    () => { res.status(200).send({}); },
-                    err => { res.status(500).send({ err: "Unknow error" }); });
-            } else if (db.validateIdReg.test(bookmarkNotificationToRemove)) {
-                db.removeBookmarkNotification(userId, bookmarkNotificationToRemove).then(
-                    () => { res.send({}); },
-                    err => { res.status(500).send({ err }); }
-                )
-            } else {
-                res.status(409).send({ err: "Unknow operation" });
+            try {
+
+                if (db.validateIdReg.test(bookmarkToFollow)) {
+                    await db.followBookmark(bookmarkToFollow, userId);
+
+                } else if (db.validateIdReg.test(bookmarkToUnfollow)) {
+                    await db.unfollowBookmark(bookmarkToUnfollow, userId);
+
+                } else if (db.validateIdReg.test(userToFollow)) {
+                    await db.followUser(userToFollow, userId);
+
+                } else if (db.validateIdReg.test(userToUnfollow)) {
+                    await db.unfollowUser(userToUnfollow, userId);
+
+                } else if (db.validateIdReg.test(bookmarkNotificationToRemove)) {
+                    await db.removeBookmarkNotification(userId, bookmarkNotificationToRemove);
+
+                } else {
+                    throw "Unknow Operation";
+                }
+
+                res.send({});
+
+            } catch (err) {
+                res.status(500).send({ err });
             }
 
-        }, err => { res.status(400).send({ err: "Invalid cookie" }); })
-
+        } catch (err) {
+            res.status(400).send({ err: "Invalid cookie" });
+        }
     } else {
         res.status(409).send({ err: "Illegal cookie" });
     }
 
 });
 
-router.delete("/", (req, res) => {
+router.delete("/", async (req, res) => {
     const cookie: string = req.body.cookie;
 
     if (cookie) {
-        db.getUserByCookie(cookie).then(userId => {
-            db.removeUser(userId).then(() => {
+
+        try {
+            const userId = await db.getUserByCookie(cookie);
+
+            try {
+                await db.removeUser(userId);
                 res.send({});
-            }, () => { res.status(500).send({ err: "Unknown" }); });
-        }, err => {
+            } catch (err) {
+                res.status(500).send({ err });
+            }
+
+        } catch (err) {
             res.status(400).send({ err: "Invalid cookie" });
-        });
+        }
     } else {
         res.status(409).send({ err: "Empty cookie" });
     }

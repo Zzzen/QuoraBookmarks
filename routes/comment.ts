@@ -4,30 +4,37 @@ import db = require("../db");
 const router = express.Router();
 
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
     const comment = {
         ip: req.ip,
         content: req.body.content
     };
 
     if (comment.content) {
-        db.addComment(comment).then(
-            () => { res.send({}); },
-            err => { res.status(400).send({ err }); }
-        );
+
+        try {
+            await db.addComment;
+            res.send({});
+        } catch (err) {
+            console.log(err);
+            res.status(400).send({ err });
+        }
+
     } else {
         res.status(409).send({ err: "empty content" });
     }
 });
 
-router.get("/", (req, res) => {
+router.get("/", async (req, res) => {
     const start = Number.parseInt(req.query.start) || 0;
     const length = Number.parseInt(req.query.length) || 10;
 
-    db.getComments(start, length).then(
-        results => { res.send(results); },
-        err => { res.status(400).send({ err }); }
-    );
+    try {
+        const results = await db.getComments();
+        res.send(results);
+    } catch (err) {
+        res.status(400).send({ err });
+    }
 });
 
 

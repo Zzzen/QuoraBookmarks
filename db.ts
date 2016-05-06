@@ -104,378 +104,275 @@ export function removeBookmarkNotification(userId: mongodb.ObjectID, bookmark: s
     );
 }
 
-export function getBookmarkNotifications(user: string) {
+export async function getBookmarkNotifications(user: string): Promise<BookmarkNotification[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
 
-    const promise = new Promise<BookmarkNotification[]>((resolve, reject) => {
-        db.collection("users").find({ _id: userId }).limit(1).toArray((err: Error, users: User[]) => {
-            if (err || 0 === users.length) {
-                reject(err);
-            } else if (0 === users[0].bookmarkNotifications.length) {
-                resolve([]);
-            } else {
-                // find and set title for each bookmark.
-                db.collection("bookmarks").find(
-                    {
-                        _id:
-                        { $in: users[0].bookmarkNotifications.map(x => mongodb.ObjectID.createFromHexString(x.sourceId)) }
-                    }).toArray((err: Error, bookmarks: Bookmark[]) => {
-                        const notifis = users[0].bookmarkNotifications;
-                        const idToTitle = new Map<string, string>();
+    const users: User[] = await db.collection("users").find({ _id: userId }).limit(1).toArray();
+    if (0 === users.length) {
+        throw "user not found";
 
-                        bookmarks.forEach(element => {
-                            idToTitle.set(element._id.toHexString(), element.title);
-                        });
+    } else if (0 === users[0].bookmarkNotifications.length) {
+        return [];
 
-                        notifis.forEach(element => {
-                            element.title = idToTitle.get(element.sourceId);
-                        });
+    } else {
+        const bookmarkIds = users[0].bookmarkNotifications.map(x => mongodb.ObjectID.createFromHexString(x.sourceId))
+        const bookmarks: Bookmark[] = await db.collection("bookmarks").find({ _id: { $in: bookmarkIds } }).toArray();
 
-                        resolve(notifis);
-                    });
-            }
+        // set title for each notification.
+        const notifis = users[0].bookmarkNotifications;
+        const idToTitle = new Map<string, string>();
+
+        bookmarks.forEach(element => {
+            idToTitle.set(element._id.toHexString(), element.title);
         });
-    });
-    return promise;
+
+        notifis.forEach(element => {
+            element.title = idToTitle.get(element.sourceId);
+        });
+
+        return notifis;
+    }
 }
 
 // @return Promise: string, cookieID
-function insertCookie(userId: mongodb.ObjectID): Promise<Object> {
-    const promise = new Promise<Object>((resolve, reject) => {
-        const cookie: Cookie = {
-            userId,
-            content: generateGUID(),
-            date: new Date()
-        };
+async function insertCookie(userId: mongodb.ObjectID) {
+    const cookie: Cookie = {
+        userId,
+        content: generateGUID(),
+        date: new Date()
+    };
 
-        db.collection("cookies").insertOne(cookie, (err, result) => {
-            if (1 === result.insertedCount) {
-                resolve({
-                    userId,
-                    cookie: cookie.content
-                });
-            } else {
-                console.log(err);
-                reject("fail to insert cookie");
-            }
-        });
-    });
-    return promise;
+    const result = await db.collection("cookies").insertOne(cookie);
+
+    if (1 === result.insertedCount) {
+        return { userId, cookie: cookie.content };
+    } else {
+        throw "failed to insert cookie";
+    }
 }
 
 // reject if cookie is invalid.
-export function getUserByCookie(cookie: string): Promise<mongodb.ObjectID> {
-    const promise = new Promise<mongodb.ObjectID>((resolve, reject) => {
-        db.collection("cookies").find({ content: cookie }).limit(1).toArray((err: Error, arr: Cookie[]) => {
-            if (0 === arr.length) {
-                reject();
-            } else {
-                resolve(arr[0].userId);
-            }
-        });
-    });
-    return promise;
+export async function getUserByCookie(cookie: string) {
+    const results: Cookie[] = await db.collection("cookies").find({ content: cookie }).limit(1).toArray();
+
+    if (0 !== results.length) {
+        return results[0].userId;
+    } else {
+        throw "Invalid cookie";
+    }
 }
 
 // check whether a name is available.
-// @return promise<void>
-export function isUsernameAvailable(username: string): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        if (!username) {
-            reject();
-        } else {
-            db.collection("users").find({ $and: [{ username: { $ne: null } }, { username: username }] }).limit(1).toArray((err, arr) => {
-                assert.equal(err, null);
-                if (0 === arr.length) {
-                    resolve();
-                } else {
-                    reject();
-                }
-            });
-        }
-    });
-    return promise;
+export async function isUsernameAvailable(username: string) {
+    const users = await db.collection("users").find({ $and: [{ username: { $ne: null } }, { username: username }] }).limit(1).toArray();
+
+    if (0 === users.length) {
+        return;
+    } else {
+        throw "username not available";
+    }
 }
 
 // check whether a email address is available.
-// @return promise<void>
-export function isEmailAvailable(email: string): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        if (!email) {
-            resolve();
-        } else {
-            db.collection("users").find({ $and: [{ email: { $ne: null } }, { email: email }] }).limit(1).toArray((err, arr) => {
-                if (0 === arr.length) {
-                    resolve();
-                } else {
-                    reject();
-                }
-            });
-        }
-    });
-    return promise;
+export async function isEmailAvailable(email: string) {
+    const users = await db.collection("users").find({ $and: [{ email: { $ne: null } }, { email: email }] }).limit(1).toArray();
+
+    if (0 === users.length) {
+        return;
+    } else {
+        throw "email not available";
+    }
 }
 
 // @param user: email or username must be defined, password must be defined.
-// @return Promise; resolve(cookie: string), reject("")
-export function varifyUser(user: User, password: string): Promise<Object> {
-    const promise = new Promise<Object>((resolve, reject) => {
-        db.collection("users").find(
-            {
-                $or: [
-                    { $and: [{ email: { $ne: null } }, { email: user.email }] },
-                    { $and: [{ username: { $ne: null } }, { username: user.username }] }
-                ]
-            }
-        ).limit(1).toArray((err: Error, results: User[]) => {
-            assert.equal(err, null, "err: cursor.toArray");
-            if (0 === results.length) {
-                reject("Username not found");
-            } else {
-                const found = results[0];
-                if (hash(password + found.salt) === found.hashedPassword) {
-                    insertCookie(results[0]._id).then((id) => resolve(id),
-                        (id) => reject(id));
-                } else {
-                    reject("Wrong password");
-                }
-            }
-        });
-    });
+export async function varifyUser(user: User, password: string) {
+    const users: User[] = await db.collection("users").find(
+        {
+            $or: [
+                { $and: [{ email: { $ne: null } }, { email: user.email }] },
+                { $and: [{ username: { $ne: null } }, { username: user.username }] }
+            ]
+        }
+    ).limit(1).toArray();
 
-    return promise;
+    if (0 !== users.length) {
+        const found = users[0];
+
+        if (hash(password + found.salt) === found.hashedPassword) {
+            return await insertCookie(found._id);
+        } else {
+            throw "wrong password";
+        }
+    }
 }
 
 // @param user: email, username, hashedPassword must be defined.
-export function addUser(user: User): Promise<User> {
-    const promise = new Promise<User>((resolve, reject) => {
-        db.collection("users").insertOne(user, (err, result) => {
-            if (1 === result.insertedCount) {
-                resolve(user);
-            } else {
-                console.log(err);
-                reject(user);
-            }
-        });
-    });
+export async function addUser(user: User): Promise<User> {
+    const result = await db.collection("users").insertOne(user);
 
-    return promise;
+    if (1 === result.insertedCount) {
+        return user;
+    } else {
+        throw "failed to add a user";
+    }
 }
 
 // @param bookmark: creatorId, title must be defined.
-export function addBookmark(bookmark: Bookmark): Promise<Bookmark> {
-    const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection("bookmarks").insertOne(bookmark, (err, result) => {
-            if (1 === result.insertedCount) {
-                resolve(bookmark);
-            } else {
-                console.log(err);
-                reject(err);
-            }
-        });
-    });
+export async function addBookmark(bookmark: Bookmark): Promise<Bookmark> {
+    const result = await db.collection("bookmarks").insertOne(bookmark);
 
-    return promise;
+    if (1 === result.insertedCount) {
+        return bookmark;
+    } else {
+        throw "failed to add a bookmark";
+    }
+
 }
 
 // @param bookmark: string representation of bookmark._id
 // @param answer: the url of answer
-// @return Promise
-export function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID) {
+export async function addAnswer(bookmark: string, answer: string, userId: mongodb.ObjectID) {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } }, (err, result) => {
-            if (err) {
-                console.log(err);
-                reject(err);
-            } else {
-                resolve();
 
-                if (1 === result.modifiedCount) {
-                    addBookmarkNotification(bookmark);
-                }
-            }
-        });
-    });
+    const result = await db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $addToSet: { answers: answer } });
 
-    return promise;
+    if (1 === result.modifiedCount) {
+        addBookmarkNotification(bookmark);
+    }
 }
 
-export function getUsers(selector: Object): Promise<User[]> {
-    const promise = new Promise<User[]>((resolve, reject) => {
-        db.collection("users").find(selector).toArray((err: Error, results: User[]) => {
-            resolve(results);
-        });
-    });
+export async function getUsers(selector: Object) {
+    const users: User[] = await db.collection("users").find(selector).toArray();
 
-    return promise;
+    return users;
 }
 
 // @brief get bookmarks of an user
 // @param user: string representation of user._id
-// @return Promise<Bookmark[]> may be an empty array
-export function getBookmarksOfUser(user: string, projection?: Object): Promise<Bookmark[]> {
+export async function getBookmarksOfUser(user: string, projection?: Object): Promise<Bookmark[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
-    const promise = new Promise<Bookmark[]>((resolve, reject) => {
-        if (!userId) {
-            reject();
-        } else {
-            db.collection("bookmarks").find({ creatorId: userId }).project(projection).toArray((err: Error, results: Bookmark[]) => {
-                resolve(results);
-            });
-        }
-    });
 
-    return promise;
+    const bookmarks = await db.collection("bookmarks").find({ creatorId: userId }).project(projection).toArray();
+
+    return bookmarks;
 }
 
 
-export function getFollowedBookmarks(user: string): Promise<string[]> {
+export async function getFollowedBookmarks(user: string): Promise<string[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
-    const promise = new Promise<string[]>((resolve, reject) => {
-        db.collection("users").find({ _id: userId }).limit(1).next((err: Error, result: User) => {
-            if (err || !result) {
-                reject(err);
-            } else {
-                resolve(result.followedBookmarks);
-            }
-        });
-    });
 
-    return promise;
+    const found: User = await db.collection("users").find({ _id: userId }).limit(1).next();
+
+    if (found) {
+        return found.followedBookmarks;
+    } else {
+        throw "user not found";
+    }
 }
 
 
 // @brief get bookmark by id.
 // @param bookmark: string representation of bookmark._id
-export function getBookmarkById(bookmark: string): Promise<Bookmark> {
+export async function getBookmarkById(bookmark: string): Promise<Bookmark> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<Bookmark>((resolve, reject) => {
-        db.collection("bookmarks").find({ _id: bookmarkId }).limit(1).toArray((err: Error, result: Bookmark[]) => {
-            if (0 === result.length) {
-                reject("bookmark not found");
-            } else {
-                resolve(result[0]);
-            }
-        });
-    });
 
-    return promise;
+    const found: Bookmark = await db.collection("bookmarks").find({ _id: bookmarkId }).limit(1).next();
+
+    if (found) {
+        return found;
+    } else {
+        throw "bookmark not found";
+    }
 }
 
 // @brief remove an answer of a bookmark
-export function removeAnswer(answer: string, bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+export async function removeAnswer(answer: string, bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $pull: { "answers": answer } }, (err, result) => {
-            if (1 === result.modifiedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        });
-    });
-    return promise;
+
+    const result = await db.collection("bookmarks").updateOne({ _id: bookmarkId, creatorId: userId }, { $pull: { "answers": answer } });
+
+    if (1 === result.modifiedCount) {
+        return;
+    } else {
+        throw "failed to remove an answer";
+    }
 }
 
-export function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+export async function removeBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
     const bookmarkId = mongodb.ObjectID.createFromHexString(bookmark);
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("bookmarks").deleteOne({ _id: bookmarkId, creatorId: userId }, (err, result) => {
-            if (1 === result.deletedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        });
-    });
 
-    return promise;
+    const result = await db.collection("bookmarks").deleteOne({ _id: bookmarkId, creatorId: userId });
+
+    if (1 === result.deletedCount) {
+        return;
+    } else {
+        throw "failed to remove an bookmark";
+    }
 }
 
 
-export function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedBookmarks: bookmark } }, (err, result) => {
-            if (1 === result.modifiedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        });
-    });
-    return promise;
+export async function followBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const result = await db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedBookmarks: bookmark } });
+
+    if (1 === result.modifiedCount) {
+        return;
+    } else {
+        throw "failed to follow a bookmark";
+    }
+
 }
 
-export function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").updateOne({ _id: userId }, { $pull: { followedBookmarks: bookmark } }, (err, result) => {
-            if (1 === result.modifiedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        });
-    });
-    return promise;
+export async function unfollowBookmark(bookmark: string, userId: mongodb.ObjectID): Promise<void> {
+    const result = await db.collection("users").updateOne({ _id: userId }, { $pull: { followedBookmarks: bookmark } });
+
+    if (1 === result.modifiedCount) {
+        return;
+    } else {
+        throw "failed to unfollow a bookmark";
+    }
 }
 
-export function getFollowedUsers(user: string): Promise<User[]> {
+export async function getFollowedUsers(user: string): Promise<User[]> {
     const userId = mongodb.ObjectID.createFromHexString(user);
-    const promise = new Promise<User[]>((resolve, reject) => {
-        db.collection("users").find({ _id: userId }).limit(1).next((err: Error, result: User) => {
-            // console.log("result: ", result);
-            if (err || !result) {
-                console.log(err);
-                reject(err);
-            } else {
-                db.collection("users").find({ _id: { $in: result.followedUsers.map(mongodb.ObjectID.createFromHexString) } }).toArray((err, results) => {
-                    resolve(results);
-                });
-            }
-        });
-    });
 
-    return promise;
+    const found: User = await db.collection("users").find({ _id: userId }).limit(1).next();
+
+    if (found) {
+        const followedUsers = await db.collection("users").find({ _id: { $in: found.followedUsers.map(mongodb.ObjectID.createFromHexString) } }).toArray();
+        return followedUsers;
+    } else {
+        throw "user not found";
+    }
 }
 
-export function followUser(userToFollow: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedUsers: userToFollow } }, (err, result) => {
-            if (1 === result.modifiedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        })
-    });
-    return promise;
+export async function followUser(userToFollow: string, userId: mongodb.ObjectID): Promise<void> {
+    const result = await db.collection("users").updateOne({ _id: userId }, { $addToSet: { followedUsers: userToFollow } });
+
+    if (1 === result.modifiedCount) {
+        return;
+    } else {
+        throw "unable to follow user";
+    }
 }
 
-export function unfollowUser(userToUnfollow: string, userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").updateOne({ _id: userId }, { $pull: { followedUsers: userToUnfollow } }, (err, result) => {
-            if (1 === result.modifiedCount) {
-                resolve();
-            } else {
-                reject(err);
-            }
-        })
-    })
-    return promise;
+export async function unfollowUser(userToUnfollow: string, userId: mongodb.ObjectID): Promise<void> {
+    const result = await db.collection("users").updateOne({ _id: userId }, { $pull: { followedUsers: userToUnfollow } });
+
+    if (1 === result.modifiedCount) {
+        return;
+    } else {
+        throw "unable to unfollow user";
+    }
 }
 
-export function removeUser(userId: mongodb.ObjectID): Promise<void> {
-    const promise = new Promise<void>((resolve, reject) => {
-        db.collection("users").deleteOne({ _id: userId }, (err, result) => {
-            if (1 === result.deletedCount) {
-                resolve();
-            } else {
-                reject();
-            }
-        });
-    });
-    return promise;
+export async function removeUser(userId: mongodb.ObjectID): Promise<void> {
+    const result = await db.collection("users").deleteOne({ _id: userId });
+
+    if (1 === result.deletedCount) {
+        return;
+    } else {
+        throw "unable to remove user";
+    }
 }
 
 export function generateGUID() {
@@ -517,29 +414,18 @@ export function getRandomUser(num: number = 20): Promise<UserWithCreatedBookmark
     return promise;
 }
 
-export function addComment(comment: Comment) {
-    return new Promise<void>((resolve, reject) => {
-        db.collection("comments").insertOne(comment).then(
-            result => {
-                if (1 === result.insertedCount) {
-                    resolve();
-                } else {
-                    reject();
-                }
-            },
-            err => { reject(err); }
-        );
-    });
+export async function addComment(comment: Comment) {
+    const result = await db.collection("comments").insertOne(comment);
+
+    if (1 === result.insertedCount) {
+        return comment;
+    } else {
+        throw "unable to add comment";
+    }
 }
 
-export function getComments(start = 0, length = 10) {
-    return new Promise<Comment[]>((resolve, reject) => {
-        db.collection("comments").find({}).sort({ _id: -1 }).toArray((err: Error, result: Comment[]) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(result.slice(start, start + length));
-            }
-        });
-    });
+export async function getComments(start = 0, length = 10) {
+    const comments: Comment[] = await db.collection("comments").find({}).sort({ _id: -1 }).toArray();
+
+    return comments;
 }
