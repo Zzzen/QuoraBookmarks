@@ -18,4 +18,16 @@
     max-width: 850px;
     margin-left: auto;
     margin-right: auto;
+    background-color: wheat;
+    border-radius: 20px;
+    padding: 10px;
+}
+
+.scrollProgressBar {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    height: 5px;
+    background: #093969;
+    display: block;
 }

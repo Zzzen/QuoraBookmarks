@@ -33,8 +33,11 @@ html(lang="en")
                         button.btn.btn-default(v-on:click.prevent="submit" type="submit") Submit
                 div.col-md-7
                      div(v-for="comment in comments")
-                        h1 {{comment.ip}}: 
+                        h1 {{comment.ip}}:
                         p {{comment.content}}
+
+
+        progress.scrollProgressBar(value="0" max="1")
 
         div#loadingBar(class="center loadingBar" style="display:none;")
             div.loader-inner.pacman(class="center")
@@ -42,7 +45,7 @@ html(lang="en")
                 div
                 div
                 div
-                
+
         div#dialog.modal.fade(tabindex="-1" role="dialog" aria-labelledby="...")
             div.modal-dialog(role="document")
                 div.modal-content
@@ -52,7 +55,7 @@ html(lang="en")
                         p GERSWHRSREGYRE
                 div.modal-footer
                     button.btn.btn-default(data-dismiss="modal") Close
-                        
+
 
         canvas#background(style="z-index:-10; position: fixed;  bottom: -25%; left: 0px")
 
@@ -61,7 +64,8 @@ html(lang="en")
     include ./includes/jQuery.jade
     include ./includes/bootstrapScript.jade
     include ./includes/vue.jade
-
+    
+    include ./includes/vex.jade
     script
         include ../public/javascripts/indexBundled.js
         include ../public/javascripts/cat.js

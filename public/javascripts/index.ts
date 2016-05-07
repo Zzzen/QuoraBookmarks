@@ -87,12 +87,14 @@ $("#refresh").click(event => {
 
 refresh();
 
+const vmData = {
+    content: "",
+    comments: [Comment]
+};
+
 const vm = new Vue({
     el: ".mainContainer",
-    data: {
-        content: "",
-        comments: []
-    },
+    data: vmData,
     methods: {
         submit(event: MouseEvent) {
             $loadingBar.fadeIn("fast");
@@ -100,6 +102,7 @@ const vm = new Vue({
             $.post("/comment", { content: this.content })
                 .done(() => {
                     this.comments.unshift({ content: this.content, ip: "" });
+                    vex.dialog.alert("You have posted a comment successfully.");
                 })
                 .fail(err => {
                     console.log(err);
@@ -108,6 +111,13 @@ const vm = new Vue({
                 .always(() => { $loadingBar.fadeOut("fast"); });
         }
     }
+});
+
+$(window).scroll(() => {
+    const s = $(window).scrollTop();
+    const d = $(document).height();
+    const h = $(window).height();
+    $(".scrollProgressBar").css("width", `${100 * s / (d - h)}%`);
 });
 
 getComment().done((comments: Comment[]) => {

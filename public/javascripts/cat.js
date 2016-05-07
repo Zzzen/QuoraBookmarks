@@ -1,3 +1,4 @@
+// `CAAAAT` is no longer rendered at the bottom of update() function.
 
 function Polygon(mat, vtxsrc, vtxids) {
     this.material = mat;
@@ -2284,7 +2285,7 @@ function update() {
         models[i].update();
     }
     len = renderList.length;
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i < len - 1; ++i) {
         renderList[i].render();
     }
 };
