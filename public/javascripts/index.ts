@@ -100,13 +100,12 @@ const vm = new Vue({
             $loadingBar.fadeIn("fast");
 
             $.post("/comment", { content: this.content })
-                .done(() => {
-                    this.comments.unshift({ content: this.content, ip: "" });
+                .done((comment: Comment) => {
+                    this.comments.unshift(comment);
                     vex.dialog.alert("You have posted a comment successfully.");
                 })
                 .fail(err => {
                     console.log(err);
-                    this.content = err;
                 })
                 .always(() => { $loadingBar.fadeOut("fast"); });
         }

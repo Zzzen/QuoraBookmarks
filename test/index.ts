@@ -422,6 +422,7 @@ describe("GET /comment", () => {
             .get("/comment")
             .expect((res: any) => {
                 should(res.body).be.an.Array();
+                should(res.body.length).greaterThan(0);
             })
             .expect(200, done);
     });

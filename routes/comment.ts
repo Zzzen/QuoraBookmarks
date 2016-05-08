@@ -13,8 +13,8 @@ router.post("/", async (req, res) => {
     if (comment.content) {
 
         try {
-            await db.addComment;
-            res.send({});
+            await db.addComment(comment);
+            res.send(comment);
         } catch (err) {
             console.log(err);
             res.status(400).send({ err });
