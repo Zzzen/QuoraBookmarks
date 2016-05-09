@@ -1,6 +1,7 @@
-import {Bookmark, UserWithCreatedBookmark, Comment} from "../../db";
+import {Bookmark, UserWithCreatedBookmark, Comment, User, TokenPair} from "../../db";
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
 import * as vue from "vue";
+import docCookies = require("./cookies");
 
 const $answerDiv = $(".col-md-8");
 const $loadingBar = $("#loadingBar");
@@ -78,6 +79,38 @@ function getComment(start = 0, length = 10) {
     return $.get("/comment", { start, length });
 }
 
+function openRegisterDialog() {
+    return new Promise<{ username: string, password: string }>((resolve, reject) => {
+        vex.dialog.open({
+            message: 'Enter your username and password:',
+            input: `<input name="username" type="text" placeholder="Username" required />
+                    <input name="password" type="password" placeholder="Password" required />`,
+            buttons: [
+                $.extend({}, vex.dialog.buttons.YES, {
+                    text: 'Yes'
+                }), $.extend({}, vex.dialog.buttons.NO, {
+                    text: 'No'
+                })
+            ],
+            callback: (data: { username: string, password: string }) => {
+                if (data) {
+                    resolve(data);
+                } else {
+                    reject("No");
+                }
+            }
+        });
+    });
+}
+
+function showErrorMsg(text: string) {
+    try {
+        const json = JSON.parse(text);
+        vex.dialog.alert(json.err);
+    } catch (err) {
+        vex.dialog.alert(text);
+    }
+}
 
 $("#refresh").click(event => {
     event.preventDefault();
@@ -89,11 +122,11 @@ refresh();
 
 const vmData = {
     content: "",
-    comments: [Comment]
+    comments: new Array<Comment>()
 };
 
 const vm = new Vue({
-    el: ".mainContainer",
+    el: "body",
     data: vmData,
     methods: {
         submit(event: MouseEvent) {
@@ -108,10 +141,37 @@ const vm = new Vue({
                     console.log(err);
                 })
                 .always(() => { $loadingBar.fadeOut("fast"); });
+        },
+        register() {
+            openRegisterDialog().then(user => {
+                $.post("/user", user).done(
+                    (added: User) => {
+                        vex.dialog.alert("You have registered successfully.");
+                    }
+                ).fail((res: JQueryXHR) => {
+
+                    this.register();
+
+                    showErrorMsg(res.responseText)
+                });
+            }).catch(reason => { });
+        },
+        signin() {
+            openRegisterDialog().then(user => {
+                $.post("/login", user).done(
+                    (pair: TokenPair) => {
+                        console.log(pair);
+                    }
+                ).fail(
+                    (res: JQueryXHR) => {
+                        showErrorMsg(res.responseText);
+                    });
+            }).catch(reason => { });
         }
     }
 });
 
+// set windth of the bottom progress bar.
 $(window).scroll(() => {
     const s = $(window).scrollTop();
     const d = $(document).height();

@@ -14,6 +14,11 @@ html(lang="en")
 
     //- backgroundColor is set in cat.js :: init()
     body(style="margin:0; padding:0;  width: 100%; height: 100%;")
+        nav.navbar.navbar-default.navbar-fixed-top(style="background-color: darkgray;")
+            div.container
+                ul.nav.navbar-nav.navbar-right
+                    button.btn.btn-default.navbar-btn(type="button" v-on:click.prevent="register") Register
+                    button.btn.btn-default.navbar-btn(type="button" v-on:click.prevent="signin") Log in
         div.mainContainer
             h1 Welcome!
             p There should be some text.
@@ -31,10 +36,11 @@ html(lang="en")
                         h1 Comment:
                         textarea.form-control(v-model="content" rows="5" style="width: 100%;" placeholder="Great app! I like it.   o(^o^)o")
                         button.btn.btn-default(v-on:click.prevent="submit" type="submit") Submit
-                div.col-md-7
-                     div(v-for="comment in comments")
-                        h1 {{comment.ip}}:
-                        p {{comment.content}}
+                div.col-md-7(style="padding-top: 50px;")
+                     ul(v-for="comment of comments")
+                        li.commentList
+                            em {{comment.ip}}:
+                            pre {{comment.content}}
 
 
         progress.scrollProgressBar(value="0" max="1")

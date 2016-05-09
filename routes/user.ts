@@ -30,8 +30,7 @@ router.post("/", async (req, res) => {
 
 
         try {
-            await db.isUsernameAvailable(user.username);
-            await db.isEmailAvailable(user.email);
+            await Promise.all([db.isUsernameAvailable(user.username), db.isEmailAvailable(user.email)]);
 
             try {
                 const added = await db.addUser(user);
@@ -41,7 +40,7 @@ router.post("/", async (req, res) => {
             }
 
         } catch (err) {
-            res.status(400).send({ err: "invalid username or email" });
+            res.status(400).send({ err });
         }
 
     } else {

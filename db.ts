@@ -55,6 +55,11 @@ export interface Comment {
     content: string;
 }
 
+export interface TokenPair {
+    userId: string;
+    cookie: string;
+}
+
 function addBookmarkNotification(bookmark: string) {
     return db.collection("users").bulkWrite([
         {
@@ -135,7 +140,7 @@ export async function getBookmarkNotifications(user: string): Promise<BookmarkNo
 }
 
 // @return Promise: string, cookieID
-async function insertCookie(userId: mongodb.ObjectID) {
+async function insertCookie(userId: mongodb.ObjectID): Promise<TokenPair> {
     const cookie: Cookie = {
         userId,
         content: generateGUID(),
@@ -145,7 +150,7 @@ async function insertCookie(userId: mongodb.ObjectID) {
     const result = await db.collection("cookies").insertOne(cookie);
 
     if (1 === result.insertedCount) {
-        return { userId, cookie: cookie.content };
+        return { userId: userId.toHexString(), cookie: cookie.content };
     } else {
         throw "failed to insert cookie";
     }

@@ -18,6 +18,7 @@
     max-width: 850px;
     margin-left: auto;
     margin-right: auto;
+    margin-top: 30px;
     background-color: wheat;
     border-radius: 20px;
     padding: 10px;
@@ -30,4 +31,9 @@
     height: 5px;
     background: #093969;
     display: block;
+}
+
+.commentList > pre {
+    margin-left: 10px;
+    background-color: rgba(255, 255, 255, 0.4);
 }
