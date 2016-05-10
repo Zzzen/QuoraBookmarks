@@ -3,7 +3,8 @@ import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
 import * as vue from "vue";
 import docCookies = require("./cookies");
 
-const $answerDiv = $(".col-md-8");
+const $answerDiv = $("#answerDiv");
+const $userDiv = $("#userDiv");
 const $loadingBar = $("#loadingBar");
 
 
@@ -44,7 +45,7 @@ function switchAnswerList(bookmarks: Bookmark[]) {
 
         animateCss($newList, "rollIn");
 
-        $(".col-md-8").append($newList);
+        $answerDiv.append($newList);
     });
 }
 
@@ -55,6 +56,10 @@ function refresh() {
     // retrieve user data
     $.get("/user").done(
         (users: UserWithCreatedBookmark[]) => {
+            if (0 === users.length) {
+                return;
+            }
+
             const $newUserList = $(`<div class = "userList list-group"> </div>`);
 
             users.forEach(user => {
@@ -67,8 +72,8 @@ function refresh() {
                 $newUserList.append($user);
             });
 
-            $(".col-md-3 .userList").remove();
-            $(".col-md-3").append($newUserList);
+            $userDiv.children(".userList").remove();
+            $userDiv.append($newUserList);
         }
     ).always(() => {
         $loadingBar.fadeOut("fast");
@@ -122,7 +127,8 @@ refresh();
 
 const vmData = {
     content: "",
-    comments: new Array<Comment>()
+    comments: new Array<Comment>(),
+    login: docCookies.getItem("login")
 };
 
 const vm = new Vue({
@@ -160,13 +166,18 @@ const vm = new Vue({
             openRegisterDialog().then(user => {
                 $.post("/login", user).done(
                     (pair: LoginPair) => {
-                        console.log(pair);
+                        vmData.login = pair.login;
                     }
                 ).fail(
                     (res: JQueryXHR) => {
                         showErrorMsg(res.responseText);
                     });
             }).catch(reason => { });
+        },
+        signout() {
+            docCookies.removeItem("login");
+            vmData.login = "";
+            location.reload();
         }
     }
 });

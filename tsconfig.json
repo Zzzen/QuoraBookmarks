@@ -14,6 +14,7 @@
         "./routes/bookmark.ts",
         "./routes/login.ts",
         "./routes/comment.ts",
+        "./routes/selfInfo.ts",
         "./public/javascripts/cookies.ts",
         "./public/javascripts/index.ts",
         "./public/javascripts/bookmark.ts",
