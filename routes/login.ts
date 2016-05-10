@@ -22,7 +22,8 @@ router.post("/", async (req, res) => {
 
         try {
             const tokenPair = await db.varifyUser(user, password);
-            res.cookie("cookie", tokenPair.cookie, { expires });
+            res.cookie("userId", tokenPair.userId, {expires});
+            res.cookie("login", tokenPair.login, { expires });
             res.send(tokenPair);
         } catch (err) {
             res.status(400).send({ err });

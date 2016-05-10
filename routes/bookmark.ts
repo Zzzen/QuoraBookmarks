@@ -4,14 +4,14 @@ import db = require("../db");
 const router = express.Router();
 
 // @brief add new bookmark. return _id of bookmark if success.
-// @param : {title: string, cookie: string, description?: string, answers?: string[]}
+// @param : {title: string, login: string, description?: string, answers?: string[]}
 router.post("/", async (req, res) => {
     const bookmark: db.Bookmark = {
         title: req.body.title,
         description: req.body.description
     };
 
-    const cookie: string = req.body.cookie;
+    const cookie: string = req.body.login;
 
 
     if (bookmark.title && cookie) {
@@ -77,13 +77,13 @@ router.get(`/:bookmarkId(${db.validateId})`, async (req, res) => {
 
 // @brief add answers to a bookmark
 router.post(`/:bookmarkId(${db.validateId})`, async (req, res) => {
-    const {cookie = "", answer = ""} = req.body;
+    const {login = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
-    if (answer && cookie) {
+    if (answer && login) {
 
         try {
-            const userId = await db.getUserByCookie(cookie);
+            const userId = await db.getUserByCookie(login);
 
             try {
                 await db.addAnswer(bookmarkId, answer, userId);
@@ -104,12 +104,12 @@ router.post(`/:bookmarkId(${db.validateId})`, async (req, res) => {
 
 // @brief remove an answer of bookmark.
 router.put(`/:bookmarkId(${db.validateId})`, async (req, res) => {
-    const {cookie = "", answer = ""} = req.body;
+    const {login = "", answer = ""} = req.body;
     const bookmarkId: string = req.params.bookmarkId;
 
-    if (answer && cookie) {
+    if (answer && login) {
         try {
-            const userId = await db.getUserByCookie(cookie);
+            const userId = await db.getUserByCookie(login);
 
             try {
                 await db.removeAnswer(answer, bookmarkId, userId);
@@ -129,14 +129,14 @@ router.put(`/:bookmarkId(${db.validateId})`, async (req, res) => {
 
 // @brief remove a bookmark
 router.delete(`/:bookmarkId(${db.validateId})`, async (req, res) => {
-    const cookie: string = req.body.cookie;
+    const login: string = req.body.login;
     const bookmarkId: string = req.params.bookmarkId;
 
-    if (cookie && bookmarkId) {
+    if (login && bookmarkId) {
 
         try {
             
-            const userId = await db.getUserByCookie(cookie);
+            const userId = await db.getUserByCookie(login);
 
             try {
                 await db.removeBookmark(bookmarkId, userId);

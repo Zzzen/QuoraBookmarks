@@ -18,7 +18,7 @@ describe("GET /", () => {
 
 const username = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹`;
 const password = (new Date()).toISOString().replace(/[-:.]/g, "");
-let cookie: string;
+let login: string;
 let userId: string;
 
 describe("POST /user", () => {
@@ -50,7 +50,7 @@ describe("POST /user", () => {
 })
 
 const _username = `艹${(new Date()).toISOString().replace(/[-:.]/g, "")}艹艹`;
-let _cookie: string;
+let _login: string;
 let _userId: string;
 
 describe("POST /user", () => {
@@ -73,8 +73,8 @@ describe("POST /login", () => {
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).not.ownProperty("err", "should not return err");
-                should(res.body).hasOwnProperty("cookie", "should return a cookie");
-                cookie = res.body.cookie;
+                should(res.body).hasOwnProperty("login", "should return a login cookie");
+                login = res.body.login;
             })
             .expect(200, done);
     });
@@ -86,7 +86,7 @@ describe("POST /login", () => {
             .post("/login")
             .send({ username: _username, password })
             .expect((res: any) => {
-                _cookie = res.body.cookie;
+                _login = res.body.login;
             })
             .expect(200, done);
     });
@@ -120,7 +120,7 @@ describe("POST /bookmark", () => {
     it("should add a bookmark", done => {
         request(app)
             .post("/bookmark")
-            .send({ cookie: cookie, title: "DEFAULT TITLE" })
+            .send({ login, title: "DEFAULT TITLE" })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).not.ownProperty("err");
@@ -154,7 +154,7 @@ describe("PUT /user", () => {
     it("should follow a bookmark", done => {
         request(app)
             .put("/user")
-            .send({ cookie: _cookie, bookmarkToFollow: bookmarkId })
+            .send({ login: _login, bookmarkToFollow: bookmarkId })
             .expect(200, done);
     });
 });
@@ -163,7 +163,7 @@ describe("POST /bookmark/:bookmarkId", () => {
     it("should add an answer to bookmark", done => {
         request(app)
             .post(`/bookmark/${bookmarkId}`)
-            .send({ cookie: cookie, answer: "http://boomarks.bubiu.com" })
+            .send({ login, answer: "http://boomarks.bubiu.com" })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).not.ownProperty("err");
@@ -189,12 +189,12 @@ describe("GET /user/$_user", () => {
 
 describe("PUT /user", () => {
     it("should remove a notification about notificaton", done => {
-        const cookie = _cookie;
+        const login = _login;
         const bookmarkNotificationToRemove = bookmarkId;
 
         request(app)
             .put("/user")
-            .send({ cookie, bookmarkNotificationToRemove })
+            .send({ login, bookmarkNotificationToRemove })
             .expect(200, done);
     });
 
@@ -278,11 +278,11 @@ describe("GET /user/:userId", () => {
 describe("PUT /user/", () => {
     it("should follow a user", done => {
         const userToFollow = userId;
-        const cookie = _cookie;
+        const login = _login;
 
         request(app)
             .put("/user")
-            .send({ userToFollow, cookie })
+            .send({ userToFollow, login })
             .expect(200, done);
     });
 });
@@ -305,11 +305,11 @@ describe("GET /user/:userId", () => {
 describe("PUT /user/", () => {
     it("should unfollow a user", done => {
         const userToUnfollow = userId;
-        const cookie = _cookie;
+        const login = _login;
 
         request(app)
             .put("/user")
-            .send({ userToUnfollow, cookie })
+            .send({ userToUnfollow, login })
             .expect(200, done);
     });
 });
@@ -348,7 +348,7 @@ describe("PUT /user", () => {
     it("should unfollow a bookmark", done => {
         request(app)
             .put("/user")
-            .send({ cookie: _cookie, bookmarkToUnfollow: bookmarkId })
+            .send({ login: _login, bookmarkToUnfollow: bookmarkId })
             .expect(200, done);
     });
 });
@@ -357,7 +357,7 @@ describe("PUT /bookmark/:bookmarkId", () => {
     it("should remove an answer from bookmark", done => {
         request(app)
             .put(`/bookmark/${bookmarkId}`)
-            .send({ cookie: cookie, answer: "http://boomarks.bubiu.com" })
+            .send({ login: login, answer: "http://boomarks.bubiu.com" })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.empty();
@@ -370,7 +370,7 @@ describe("DELETE /bookmark/:bookmarkId", () => {
     it("should remove a bookmark", done => {
         request(app)
             .delete(`/bookmark/${bookmarkId}`)
-            .send({ cookie: cookie })
+            .send({ login })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.empty();
@@ -383,7 +383,7 @@ describe("DELETE /user", () => {
     it("should delete an user", done => {
         request(app)
             .delete("/user")
-            .send({ cookie: cookie })
+            .send({ login })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.empty();
@@ -396,7 +396,7 @@ describe("DELETE /user", () => {
     it("should delete another user", done => {
         request(app)
             .delete("/user")
-            .send({ cookie: _cookie })
+            .send({ login: _login })
             .expect("Content-Type", /json/)
             .expect((res: any) => {
                 should(res.body).be.empty();

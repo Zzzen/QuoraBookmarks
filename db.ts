@@ -36,11 +36,15 @@ export interface Bookmark {
     answers?: string[];
 }
 
-export interface Cookie {
+interface Cookie {
     _id?: mongodb.ObjectID;
     userId?: mongodb.ObjectID;
-    content: string;
-    date: Date;
+    login: string;
+}
+
+export interface LoginPair {
+    userId: string;
+    login: string;
 }
 
 export interface BookmarkNotification {
@@ -53,11 +57,6 @@ export interface Comment {
     _id?: mongodb.ObjectID;
     ip?: string;
     content: string;
-}
-
-export interface TokenPair {
-    userId: string;
-    cookie: string;
 }
 
 function addBookmarkNotification(bookmark: string) {
@@ -139,18 +138,16 @@ export async function getBookmarkNotifications(user: string): Promise<BookmarkNo
     }
 }
 
-// @return Promise: string, cookieID
-async function insertCookie(userId: mongodb.ObjectID): Promise<TokenPair> {
+async function insertCookie(userId: mongodb.ObjectID): Promise<LoginPair> {
     const cookie: Cookie = {
         userId,
-        content: generateGUID(),
-        date: new Date()
+        login: generateGUID()
     };
 
     const result = await db.collection("cookies").insertOne(cookie);
 
     if (1 === result.insertedCount) {
-        return { userId: userId.toHexString(), cookie: cookie.content };
+        return { userId: userId.toHexString(), login: cookie.login };
     } else {
         throw "failed to insert cookie";
     }
@@ -158,7 +155,7 @@ async function insertCookie(userId: mongodb.ObjectID): Promise<TokenPair> {
 
 // reject if cookie is invalid.
 export async function getUserByCookie(cookie: string) {
-    const results: Cookie[] = await db.collection("cookies").find({ content: cookie }).limit(1).toArray();
+    const results: Cookie[] = await db.collection("cookies").find({ login: cookie }).limit(1).toArray();
 
     if (0 !== results.length) {
         return results[0].userId;

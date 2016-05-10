@@ -112,14 +112,14 @@ router.put("/", async (req, res) => {
         userToFollow = "",
         userToUnfollow = "",
         bookmarkNotificationToRemove = "",
-        cookie = ""
+        login = ""
     } = req.body;
 
-    if (cookie) {
+    if (login) {
 
         try {
 
-            const userId = await db.getUserByCookie(cookie);
+            const userId = await db.getUserByCookie(login);
 
             try {
 
@@ -158,12 +158,12 @@ router.put("/", async (req, res) => {
 });
 
 router.delete("/", async (req, res) => {
-    const cookie: string = req.body.cookie;
+    const login: string = req.body.login;
 
-    if (cookie) {
+    if (login) {
 
         try {
-            const userId = await db.getUserByCookie(cookie);
+            const userId = await db.getUserByCookie(login);
 
             try {
                 await db.removeUser(userId);

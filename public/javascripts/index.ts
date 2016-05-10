@@ -1,4 +1,4 @@
-import {Bookmark, UserWithCreatedBookmark, Comment, User, TokenPair} from "../../db";
+import {Bookmark, UserWithCreatedBookmark, Comment, User, LoginPair} from "../../db";
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
 import * as vue from "vue";
 import docCookies = require("./cookies");
@@ -159,7 +159,7 @@ const vm = new Vue({
         signin() {
             openRegisterDialog().then(user => {
                 $.post("/login", user).done(
-                    (pair: TokenPair) => {
+                    (pair: LoginPair) => {
                         console.log(pair);
                     }
                 ).fail(

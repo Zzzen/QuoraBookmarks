@@ -1,5 +1,6 @@
 import docCookies = require("./cookies");
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
+import {LoginPair} from "../../db";
 
 const bookmarkId = window.location.pathname.replace(/.*\//g, "");
 
@@ -48,13 +49,13 @@ function logout() {
 $("#follow").click((event) => {
     event.preventDefault();
 
-    const cookie = docCookies.getItem("cookie");
+    const login = docCookies.getItem("login");
     const action = isFollowed ? "bookmarkToUnfollow" : "bookmarkToFollow";
 
     $.ajax({
         method: "PUT",
         url: "/user",
-        data: { cookie, [action]: bookmarkId }
+        data: { login, [action]: bookmarkId }
     })
         .done((data: any, statusText: string) => {
             isFollowed = !isFollowed;
@@ -99,9 +100,9 @@ $("#login").click((event) => {
     const password = getPassword();
     if (validateInput(username, password)) {
         $.post("/login", { username, password })
-            .done((data: any, statusText: string) => {
+            .done((data: LoginPair, statusText: string) => {
                 docCookies.setItem("userId", data.userId, Infinity);
-                docCookies.setItem("cookie", data.cookie, Infinity);
+                docCookies.setItem("login", data.login, Infinity);
                 docCookies.setItem("username", username, Infinity);
                 showProfile();
                 $("#profileUsername").text(username);
@@ -111,7 +112,7 @@ $("#login").click((event) => {
                     $("form").remove();
                 });
             })
-            .fail((data: any, statusText: string) => {
+            .fail((data: JQueryXHR, statusText: string) => {
                 const res = JSON.parse(data.responseText);
                 alert(res.err);
             });
@@ -123,7 +124,7 @@ $("#login").click((event) => {
 $("#cat").on("error", reloadCat);
 $("#cat").parent().click((event) => { event.preventDefault(); reloadCat(); });
 
-if (docCookies.getItem("cookie")) {
+if (docCookies.getItem("login")) {
     console.log("been logged in");
     $("#profile").attr("style", "");
     $("form").remove();
