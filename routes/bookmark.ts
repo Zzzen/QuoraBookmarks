@@ -6,7 +6,7 @@ const router = express.Router();
 // @brief add new bookmark. return _id of bookmark if success.
 // @param : {title: string, login: string, description?: string, answers?: string[]}
 router.post("/", async (req, res) => {
-    const bookmark: db.Bookmark = {
+    const bookmark: db.BookmarkDB = {
         title: req.body.title,
         description: req.body.description
     };

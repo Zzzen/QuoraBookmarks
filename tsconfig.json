@@ -3,7 +3,8 @@
         "target": "ES6",
         "module": "commonjs",
         "sourceMap": true,
-        "noImplicitAny": true
+        "noImplicitAny": true,
+        "noFallthroughCasesInSwitch": true
     },
     "files": [
         "./typings/main.d.ts",

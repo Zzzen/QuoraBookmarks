@@ -1,6 +1,6 @@
 import docCookies = require("./cookies");
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
-import {LoginPair} from "../../db";
+import {LoginPairJSON} from "../../db";
 
 const bookmarkId = window.location.pathname.replace(/.*\//g, "");
 
@@ -100,7 +100,7 @@ $("#login").click((event) => {
     const password = getPassword();
     if (validateInput(username, password)) {
         $.post("/login", { username, password })
-            .done((data: LoginPair, statusText: string) => {
+            .done((data: LoginPairJSON, statusText: string) => {
                 docCookies.setItem("userId", data.userId, Infinity);
                 docCookies.setItem("login", data.login, Infinity);
                 docCookies.setItem("username", username, Infinity);

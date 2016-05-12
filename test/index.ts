@@ -5,7 +5,7 @@ import should = require("should");
 
 import {App as app} from "../app";
 import {GetUserOption, GetBookmarkFlags} from "../interfaces";
-import {BookmarkNotification} from '../db';
+import {BookmarkNotificationJSON} from '../db';
 
 
 describe("GET /", () => {

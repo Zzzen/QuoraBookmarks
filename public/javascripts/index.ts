@@ -1,4 +1,4 @@
-import {Bookmark, UserWithCreatedBookmark, Comment, User, LoginPair} from "../../db";
+import {BookmarkJSON, UserWithCreatedBookmarkJSON, CommentJSON, UserJSON, LoginPairJSON} from "../../db";
 import {GetUserOption, GetBookmarkFlags} from "../../interfaces";
 import * as vue from "vue";
 import docCookies = require("./cookies");
@@ -15,7 +15,7 @@ function animateCss($node: JQuery, animationName: string) {
     });
 }
 
-function switchAnswerList(bookmarks: Bookmark[]) {
+function switchAnswerList(bookmarks: BookmarkJSON[]) {
 
     const $answerList = $(".answerList");
 
@@ -55,7 +55,7 @@ function refresh() {
 
     // retrieve user data
     $.get("/user").done(
-        (users: UserWithCreatedBookmark[]) => {
+        (users: UserWithCreatedBookmarkJSON[]) => {
             if (0 === users.length) {
                 return;
             }
@@ -151,7 +151,7 @@ const vm = new Vue({
         register() {
             openRegisterDialog().then(user => {
                 $.post("/user", user).done(
-                    (added: User) => {
+                    (added: UserJSON) => {
                         vex.dialog.alert("You have registered successfully.");
                     }
                 ).fail((res: JQueryXHR) => {
@@ -165,7 +165,7 @@ const vm = new Vue({
         signin() {
             openRegisterDialog().then(user => {
                 $.post("/login", user).done(
-                    (pair: LoginPair) => {
+                    (pair: LoginPairJSON) => {
                         vmData.login = pair.login;
                     }
                 ).fail(

@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
 
     if (password && (username || email)) {
         const salt = db.generateGUID();
-        const user: db.User = {
+        const user: db.UserDB = {
             username,
             salt,
             hashedPassword: db.hash(password + salt),
@@ -102,6 +102,7 @@ router.get(`/:userId(${db.validateId})`, async (req, res) => {
 
         default:
             res.status(409).send({ err: "Unknow option" });
+            break;
     }
 });
 
